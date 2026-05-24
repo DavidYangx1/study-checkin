@@ -48,7 +48,7 @@ const initialMembers = [
 ];
 
 export default function App() {
-  const [name, setName] = useState("David");
+
   const [minutes, setMinutes] = useState("120");
   const [tasks, setTasks] = useState("日语阅读, 文数错题");
   const [note, setNote] = useState("今天完成阅读精读和错题复盘。");
@@ -58,25 +58,71 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toLocaleDateString("zh-CN")
   );
+  const [currentUser, setCurrentUser] = useState(() => {
+  const savedUser = localStorage.getItem("study-circle-user");
+  return savedUser ? JSON.parse(savedUser) : null;
+});
+
+const [inviteCode, setInviteCode] = useState("");
+const [loginError, setLoginError] = useState("");
   const [monthOffset, setMonthOffset] = useState(0);
 
   useEffect(() => {
     fetchHistory();
   }, []);
 
-  async function fetchHistory() {
-    const { data, error } = await supabase
-      .from("checkins")
-      .select("*")
-      .order("created_at", { ascending: false });
+ async function fetchHistory() {
+  const { data, error } = await supabase
+    .from("checkins")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("读取历史记录失败：", error);
-      return;
-    }
-
-    setHistory(data || []);
+  if (error) {
+    console.error("读取历史记录失败：", error);
+    return;
   }
+
+  setHistory(data || []);
+}
+
+async function handleLogin() {
+  const code = inviteCode.trim();
+
+  if (!code) {
+    setLoginError("请输入邀请码。");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("invite_code", code)
+    .limit(1);
+
+  if (error) {
+    console.error("登录失败：", error);
+    setLoginError("登录失败，请检查网络或 Supabase 设置。");
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    setLoginError("邀请码错误。");
+    return;
+  }
+
+  const user = data[0];
+
+  setCurrentUser(user);
+  localStorage.setItem("study-circle-user", JSON.stringify(user));
+  
+  setLoginError("");
+}
+
+function handleLogout() {
+  localStorage.removeItem("study-circle-user");
+  setCurrentUser(null);
+  setInviteCode("");
+}
 
 
 
@@ -236,7 +282,7 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
 
   .select("id")
 
-  .eq("name", name.trim())
+  .eq("name", currentUser.name)
 
   .eq("date", today)
 
@@ -251,13 +297,15 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
       return;
     }
 
-    const newRecord = {
-      name: name.trim(),
-      date: today,
-      minutes: parsedMinutes,
-      tasks: taskList.join(" / "),
-      note,
-    };
+   const newRecord = {
+  name: currentUser.name,
+  role: currentUser.role,
+  date: today,
+  minutes: parsedMinutes,
+  tasks: taskList.join(" / "),
+  note,
+  updated_at: new Date().toISOString(),
+};
 
     let error;
 
@@ -290,7 +338,29 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
     await fetchHistory();
     setSelectedDate(today);
   }
+if (!currentUser) {
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <p className="section-kicker">PRIVATE STUDY LOG</p>
+        <h1>Study Circle</h1>
+        <p>
+          请输入你的专属邀请码。登录后，系统会自动识别你的身份，不能随便冒用别人的名字打卡。
+        </p>
 
+        <input
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value)}
+          placeholder="输入邀请码"
+        />
+
+        {loginError && <div className="login-error">{loginError}</div>}
+
+        <button onClick={handleLogin}>进入打卡系统</button>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="page">
       <header className="header">
@@ -299,9 +369,20 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
           <h1>Study Circle</h1>
           <p>David / 余静雯 / 陈夏娇 的小群学习打卡系统</p>
         </div>
-        <button onClick={() => document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth" })}>
-          去打卡
-        </button>
+       <div className="header-actions">
+  <div className="user-badge">
+    <strong>{currentUser.name}</strong>
+    <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
+  </div>
+
+  <button onClick={() => document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth" })}>
+    去打卡
+  </button>
+
+  <button className="ghost-button" onClick={handleLogout}>
+    退出
+  </button>
+</div>
       </header>
 
       <section className="hero">
@@ -342,15 +423,11 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
       <main className="main">
         <section className="form-card">
           <h2>快速打卡</h2>
-
-          <label>
-            成员
-            <select value={name} onChange={(e) => setName(e.target.value)}>
-              <option>David</option>
-              <option>余静雯</option>
-              <option>陈夏娇</option>
-            </select>
-          </label>
+<div className="current-user-card">
+  当前登录：<strong>{currentUser.name}</strong>
+  <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
+</div>
+          
 
           <label>
             今日学习时长 / 分钟
