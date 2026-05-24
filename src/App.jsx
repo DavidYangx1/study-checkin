@@ -536,6 +536,52 @@ if (!currentUser) {
           </div>
         </section>
       </main>
+      <section className="today-admin-card">
+  <div className="records-top">
+    <div>
+      <p className="section-kicker">TODAY CONTROL</p>
+      <h2>今日记录管理</h2>
+      <p>查看今天三个人的打卡状态；管理员可以删除任意记录。</p>
+    </div>
+  </div>
+
+  <div className="today-record-list">
+    {memberNames.map((memberName) => {
+      const record = todayRecordsByName[memberName];
+
+      return (
+        <div
+          className={record ? "today-record done" : "today-record"}
+          key={memberName}
+        >
+          <div className="today-record-head">
+            <strong>{memberName}</strong>
+            <span>{record ? "今日已打卡" : "今日未打卡"}</span>
+          </div>
+
+          {record ? (
+            <>
+              <p className="today-minutes">{record.minutes} 分钟</p>
+              <p>{record.tasks}</p>
+              <p>{record.note}</p>
+
+              {currentUser.role === "admin" && (
+                <button
+                  className="delete-button"
+                  onClick={() => handleDeleteRecord(record.id)}
+                >
+                  删除这条记录
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="selected-empty">今天还没有提交记录。</p>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</section>
       <section className="history-card">
        <div className="history-top">
   <div>

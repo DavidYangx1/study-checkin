@@ -763,3 +763,61 @@ textarea:focus {
 .delete-button:hover {
   background: #fecaca;
 }
+.today-admin-card {
+  margin: 24px auto 0;
+  max-width: 1180px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
+}
+
+.today-record-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.today-record {
+  border: 1px solid #e2e8f0;
+  border-radius: 22px;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.today-record.done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.today-record-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.today-record-head span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.today-record p {
+  margin: 8px 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.today-minutes {
+  font-weight: 800;
+  color: #0f172a !important;
+}
+
+@media (max-width: 900px) {
+  .today-record-list {
+    grid-template-columns: 1fr;
+  }
+}
