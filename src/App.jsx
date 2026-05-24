@@ -338,6 +338,29 @@ const calendarTitle = useMemo(() => getMonthTitle(monthOffset), [monthOffset]);
     await fetchHistory();
     setSelectedDate(today);
   }
+  async function handleDeleteRecord(recordId) {
+  if (currentUser.role !== "admin") {
+    alert("只有管理员可以删除记录。");
+    return;
+  }
+
+  const confirmed = window.confirm("确定要删除这条打卡记录吗？删除后不能恢复。");
+
+  if (!confirmed) return;
+
+  const { error } = await supabase
+    .from("checkins")
+    .delete()
+    .eq("id", recordId);
+
+  if (error) {
+    console.error("删除失败：", error);
+    alert("删除失败，请检查 Supabase 设置。");
+    return;
+  }
+
+  await fetchHistory();
+}
 if (!currentUser) {
   return (
     <div className="login-page">
@@ -595,15 +618,24 @@ if (!currentUser) {
                   <span>{record ? "已打卡" : "未打卡"}</span>
                 </div>
 
-                {record ? (
-                  <>
-                    <p className="selected-minutes">{record.minutes} 分钟</p>
-                    <p className="selected-tasks">{record.tasks}</p>
-                    <p className="selected-note">{record.note}</p>
-                  </>
-                ) : (
-                  <p className="selected-empty">这一天还没有提交记录。</p>
-                )}
+               {record ? (
+  <>
+    <p className="selected-minutes">{record.minutes} 分钟</p>
+    <p className="selected-tasks">{record.tasks}</p>
+    <p className="selected-note">{record.note}</p>
+
+    {currentUser.role === "admin" && (
+      <button
+        className="delete-button"
+        onClick={() => handleDeleteRecord(record.id)}
+      >
+        删除这条记录
+      </button>
+    )}
+  </>
+) : (
+  <p className="selected-empty">这一天还没有提交记录。</p>
+)}
               </div>
             );
           })}

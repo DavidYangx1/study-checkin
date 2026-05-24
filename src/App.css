@@ -752,3 +752,14 @@ textarea:focus {
     flex: 1 0 100%;
   }
 }
+.delete-button {
+  margin-top: 12px;
+  width: 100%;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.delete-button:hover {
+  background: #fecaca;
+}
