@@ -46,15 +46,31 @@ const initialMembers = [
     tasks: ["今日任务", "复盘"],
   },
 ];
+function getDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatInputDate(dateValue) {
+  return new Date(`${dateValue}T00:00:00`).toLocaleDateString("zh-CN");
+}
 
 export default function App() {
 
   const [minutes, setMinutes] = useState("");
   const [tasks, setTasks] = useState("");
   const [note, setNote] = useState("");
+  const [checkinDate, setCheckinDate] = useState(() => getDateInputValue());
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [editMinutes, setEditMinutes] = useState("");
+  const [editTasks, setEditTasks] = useState("");
+  const [editNote, setEditNote] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     new Date().toLocaleDateString("zh-CN")
   );
@@ -66,6 +82,7 @@ export default function App() {
   const [inviteCode, setInviteCode] = useState("");
   const [loginError, setLoginError] = useState("");
   const [monthOffset, setMonthOffset] = useState(0);
+  const [activeTab, setActiveTab] = useState("checkin");
 
   useEffect(() => {
     fetchHistory();
@@ -124,9 +141,20 @@ export default function App() {
     setInviteCode("");
   }
 
+  function canEditRecord(record) {
+    return currentUser.role === "admin" || currentUser.name === record.name;
+  }
+
 
 
   const memberNames = ["David", "余静雯", "陈夏娇"];
+  const tabs = [
+    { id: "checkin", label: "打卡" },
+    { id: "members", label: "成员" },
+    { id: "calendar", label: "日历" },
+    { id: "report", label: "周报" },
+    ...(currentUser.role === "admin" ? [{ id: "admin", label: "管理" }] : []),
+  ];
 
   function getLatestRecordsByName(records) {
     const latest = {};
@@ -194,10 +222,7 @@ export default function App() {
 
     return streak;
   }
-  function isSameDay(dateText, targetDate) {
-    const date = new Date(dateText);
-    return date.toLocaleDateString("zh-CN") === targetDate.toLocaleDateString("zh-CN");
-  }
+
 
   function isThisWeek(dateText) {
     const date = new Date(dateText);
@@ -228,7 +253,6 @@ export default function App() {
 
   function getMonthDays(offset) {
     const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
 
     const targetMonth = new Date(
       todayDate.getFullYear(),
@@ -245,8 +269,6 @@ export default function App() {
     for (let day = 1; day <= lastDay; day++) {
       const date = new Date(year, month, day);
       date.setHours(0, 0, 0, 0);
-
-      if (date < todayDate) continue;
 
       days.push({
         date: date.toLocaleDateString("zh-CN"),
@@ -309,6 +331,7 @@ export default function App() {
   }, [history]);
 
   const today = new Date().toLocaleDateString("zh-CN");
+  const checkinDateText = formatInputDate(checkinDate);
   const todayRecordsByName = recordsByDate[today] || {};
   const recordsByMember = useMemo(() => {
     return getRecordsByMember(history);
@@ -487,6 +510,10 @@ export default function App() {
 
   async function handleCheckin() {
     const parsedMinutes = Math.max(0, Number(minutes) || 0);
+    if (checkinDate > getDateInputValue()) {
+      alert("不能提前提交未来日期的打卡");
+      return;
+    }
     if (!minutes || Number(minutes) <= 0) {
       alert("请输入有效的学习时长");
       return;
@@ -507,7 +534,7 @@ export default function App() {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const today = new Date().toLocaleDateString("zh-CN");
+
 
     setLoading(true);
 
@@ -520,7 +547,7 @@ export default function App() {
 
       .eq("name", currentUser.name)
 
-      .eq("date", today)
+      .eq("date", checkinDateText)
 
       .order("created_at", { ascending: false })
 
@@ -536,7 +563,7 @@ export default function App() {
     const newRecord = {
       name: currentUser.name,
       role: currentUser.role,
-      date: today,
+      date: checkinDateText,
       minutes: parsedMinutes,
       tasks: taskList.join(" / "),
       note,
@@ -572,10 +599,21 @@ export default function App() {
 
 
     await fetchHistory();
-    setSelectedDate(today);
+    setSelectedDate(checkinDateText);
     setMinutes("");
     setTasks("");
     setNote("");
+  }
+  function handleStartEdit(record) {
+    if (!canEditRecord(record)) {
+      alert("你只能编辑自己的记录");
+      return;
+    }
+
+    setEditingRecord(record);
+    setEditMinutes(String(record.minutes || ""));
+    setEditTasks(record.tasks || "");
+    setEditNote(record.note || "");
   }
   async function handleDeleteRecord(recordId) {
     if (currentUser.role !== "admin") {
@@ -598,6 +636,49 @@ export default function App() {
       return;
     }
 
+    await fetchHistory();
+  }
+  function handleCancelEdit() {
+    setEditingRecord(null);
+    setEditMinutes("");
+    setEditTasks("");
+    setEditNote("");
+  }
+  async function handleSaveEdit() {
+    if (!editingRecord) return;
+
+    if (!editMinutes || Number(editMinutes) <= 0) {
+      alert("请输入有效的学习时长");
+      return;
+    }
+
+    if (!editTasks.trim()) {
+      alert("请填写任务内容");
+      return;
+    }
+
+    if (!editNote.trim()) {
+      alert("请填写复盘内容");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("checkins")
+      .update({
+        minutes: Math.max(0, Number(editMinutes) || 0),
+        tasks: editTasks.trim(),
+        note: editNote.trim(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingRecord.id);
+
+    if (error) {
+      console.error("保存编辑失败：", error);
+      alert("保存失败，请检查 Supabase 设置");
+      return;
+    }
+
+    handleCancelEdit();
     await fetchHistory();
   }
   function handleExportCSV() {
@@ -698,9 +779,10 @@ export default function App() {
             <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
           </div>
 
-          <button onClick={() => document.querySelector(".form-card")?.scrollIntoView({ behavior: "smooth" })}>
+          <button onClick={() => setActiveTab("checkin")}>
             去打卡
           </button>
+
           {currentUser.role === "admin" && (
 
             <button className="ghost-button" onClick={handleExportCSV}>
@@ -724,7 +806,7 @@ export default function App() {
 
         <p>
 
-          用统一记录代替口头承诺。每一天的学习时长、任务内容和复盘都会被保存，方便三个人互相监督、追踪进度、复盘执行质量。
+          用统一记录代替口头承诺，每一天的学习时长、任务内容和复盘都会被保存，方便三个人互相监督、追踪进度、复盘执行质量
 
         </p>
 
@@ -763,354 +845,456 @@ export default function App() {
           <h3>{topStreak} 天</h3>
         </div>
       </section>
-
-      <main className="main">
-        <section className="form-card">
-          <h2>快速打卡</h2>
-          <div className="current-user-card">
-            当前登录：<strong>{currentUser.name}</strong>
-            <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
-          </div>
-
-
-          <label>
-            今日学习时长 / 分钟
-            <input
-
-              value={minutes}
-
-              onChange={(e) => setMinutes(e.target.value)}
-
-              placeholder="例如：120"
-
-            />
-          </label>
-
-          <label>
-            任务标签，用逗号隔开
-            <input
-              value={tasks}
-              onChange={(e) => setTasks(e.target.value)}
-              placeholder="例如：英语学习, 数学错题"
-            />
-          </label>
-
-          <label>
-            今日复盘
-            <textarea
-
-              value={note}
-
-              onChange={(e) => setNote(e.target.value)}
-
-              placeholder="写一下今天完成了什么、哪里需要改进"
-
-            />
-          </label>
-
-          <button onClick={handleCheckin} disabled={loading}>
-
-            <CheckCircle2 size={18} />
-
-            {loading ? "提交中..." : "提交今日打卡"}
-
+      <nav className="tab-nav">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={activeTab === tab.id ? "tab-button active" : "tab-button"}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
           </button>
-        </section>
+        ))}
+      </nav>
+      <main className="main">
+        {activeTab === "checkin" && (
+          <section className="form-card">
+            <h2>快速打卡</h2>
+            <div className="current-user-card">
+              当前登录：<strong>{currentUser.name}</strong>
+              <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
+            </div>
 
-        <section className="records">
+            <label>
+              打卡日期
+              <input
+                type="date"
+                value={checkinDate}
+                max={getDateInputValue()}
+                onChange={(e) => setCheckinDate(e.target.value)}
+              />
+            </label>
+
+            <label>
+              学习时长 / 分钟
+              <input
+
+                value={minutes}
+
+                onChange={(e) => setMinutes(e.target.value)}
+
+                placeholder="例如：120"
+
+              />
+            </label>
+
+            <label>
+              任务标签，用逗号隔开
+              <input
+                value={tasks}
+                onChange={(e) => setTasks(e.target.value)}
+                placeholder="例如：英语学习, 数学错题"
+              />
+            </label>
+
+            <label>
+              今日复盘
+              <textarea
+
+                value={note}
+
+                onChange={(e) => setNote(e.target.value)}
+
+                placeholder="写一下今天完成了什么、哪里需要改进"
+
+              />
+            </label>
+
+            <button onClick={handleCheckin} disabled={loading}>
+
+              <CheckCircle2 size={18} />
+
+              {loading ? "提交中..." : "提交打卡"}
+
+            </button>
+          </section>
+        )}
+
+        {activeTab === "members" && (
+          <section className="records">
+            <div className="records-top">
+              <div>
+                <h2>成员打卡记录</h2>
+                <p>按今日学习时长和连续天数排序</p>
+              </div>
+
+              <div className="search">
+                <Search size={16} />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="搜索成员或目标"
+                />
+              </div>
+            </div>
+
+            <div className="member-grid">
+              {sortedMembers.map((member, index) => (
+                <div className="member-card" key={member.id}>
+                  <div className="member-head">
+                    <div className="avatar">{member.avatar}</div>
+                    <div>
+                      <h3>{member.name}</h3>
+                      <p>{member.goal}</p>
+                    </div>
+                    <span className="rank">#{index + 1}</span>
+                  </div>
+
+                  <div className="mini-stats">
+                    <div>
+                      <Flame size={15} />
+                      <span>{member.streak} 天</span>
+                    </div>
+                    <div>
+                      <Clock size={15} />
+                      <span>{member.minutes} 分钟</span>
+                    </div>
+                    <div>
+                      <CalendarDays size={15} />
+                      <span>{member.total} 次</span>
+                    </div>
+                  </div>
+
+                  <p className="note">{member.note}</p>
+
+                  <div className="tags">
+                    {member.tasks.map((task) => (
+                      <span key={task}>{task}</span>
+                    ))}
+                  </div>
+
+                  <div className={member.checkedToday ? "status done" : "status"}>
+                    {member.checkedToday ? "今日已打卡" : "今日未打卡"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+      {activeTab === "admin" && currentUser.role === "admin" && (
+        <section className="today-admin-card">
           <div className="records-top">
             <div>
-              <h2>成员打卡记录</h2>
-              <p>按今日学习时长和连续天数排序</p>
-            </div>
-
-            <div className="search">
-              <Search size={16} />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜索成员或目标"
-              />
+              <p className="section-kicker">TODAY CONTROL</p>
+              <h2>今日记录管理</h2>
+              <p>查看今天三个人的打卡状态</p>
             </div>
           </div>
 
-          <div className="member-grid">
-            {sortedMembers.map((member, index) => (
-              <div className="member-card" key={member.id}>
-                <div className="member-head">
-                  <div className="avatar">{member.avatar}</div>
-                  <div>
-                    <h3>{member.name}</h3>
-                    <p>{member.goal}</p>
-                  </div>
-                  <span className="rank">#{index + 1}</span>
-                </div>
+          <div className="today-record-list">
+            {memberNames.map((memberName) => {
+              const record = todayRecordsByName[memberName];
 
-                <div className="mini-stats">
-                  <div>
-                    <Flame size={15} />
-                    <span>{member.streak} 天</span>
+              return (
+                <div
+                  className={record ? "today-record done" : "today-record"}
+                  key={memberName}
+                >
+                  <div className="today-record-head">
+                    <strong>{memberName}</strong>
+                    <span>{record ? "今日已打卡" : "今日未打卡"}</span>
                   </div>
-                  <div>
-                    <Clock size={15} />
-                    <span>{member.minutes} 分钟</span>
-                  </div>
-                  <div>
-                    <CalendarDays size={15} />
-                    <span>{member.total} 次</span>
-                  </div>
-                </div>
 
-                <p className="note">{member.note}</p>
+                  {record ? (
+                    <>
+                      <p className="today-minutes">{record.minutes} 分钟</p>
+                      <p>{record.tasks}</p>
+                      <p>{record.note}</p>
 
-                <div className="tags">
-                  {member.tasks.map((task) => (
-                    <span key={task}>{task}</span>
-                  ))}
-                </div>
 
-                <div className={member.checkedToday ? "status done" : "status"}>
-                  {member.checkedToday ? "今日已打卡" : "今日未打卡"}
+                      {canEditRecord(record) && (
+                        <button
+                          className="edit-button"
+                          onClick={() => handleStartEdit(record)}
+                        >
+                          编辑这条记录
+                        </button>
+                      )}
+
+
+
+                      {currentUser.role === "admin" && (
+                        <button
+                          className="delete-button"
+                          onClick={() => handleDeleteRecord(record.id)}
+                        >
+                          删除这条记录
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="selected-empty">今天还没有提交记录</p>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
-      </main>
-      <section className="today-admin-card">
-        <div className="records-top">
-          <div>
-            <p className="section-kicker">TODAY CONTROL</p>
-            <h2>今日记录管理</h2>
-            <p>查看今天三个人的打卡状态；管理员可以删除任意记录</p>
-          </div>
-        </div>
+      )}
 
-        <div className="today-record-list">
-          {memberNames.map((memberName) => {
-            const record = todayRecordsByName[memberName];
-
-            return (
-              <div
-                className={record ? "today-record done" : "today-record"}
-                key={memberName}
-              >
-                <div className="today-record-head">
-                  <strong>{memberName}</strong>
-                  <span>{record ? "今日已打卡" : "今日未打卡"}</span>
-                </div>
-
-                {record ? (
-                  <>
-                    <p className="today-minutes">{record.minutes} 分钟</p>
-                    <p>{record.tasks}</p>
-                    <p>{record.note}</p>
-
-                    {currentUser.role === "admin" && (
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDeleteRecord(record.id)}
-                      >
-                        删除这条记录
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <p className="selected-empty">今天还没有提交记录</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-      <section className="chart-card">
-        <div className="records-top">
-          <div>
-            <p className="section-kicker">LEARNING CURVE</p>
-            <h2>未来 7 天打卡视图</h2>
-
-            <p>时间轴与年度日历一致，从今天开始向后显示 7 天</p>
-          </div>
-        </div>
-
-        <div className="chart-grid">
-          {chartData.map((member) => (
-            <div className="chart-member" key={member.memberName}>
-              <div className="chart-member-head">
-                <strong>{member.memberName}</strong>
-                <span>
-                  未来 7 日合计{" "}
-                  {member.days.reduce((sum, day) => sum + day.minutes, 0)} 分钟
-                </span>
-              </div>
-
-              <div className="bar-chart">
-                {member.days.map((day) => (
-                  <div className="bar-item" key={day.date}>
-                    <div className="bar-track">
-                      <div
-                        className="bar-fill"
-                        style={{
-                          height: `${Math.max(
-                            4,
-                            (day.minutes / member.maxMinutes) * 100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="bar-minutes">{day.minutes}</span>
-                    <span className="bar-label">{day.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="weekly-report-card">
-        <div className="records-top">
-          <div>
-            <p className="section-kicker">WEEKLY REPORT</p>
-            <h2>本周学习周报</h2>
-            <p>按本周一到周日统计，小组和个人数据会根据打卡记录自动更新</p>
-          </div>
-        </div>
-
-        <div className="weekly-summary">
-          <div>
-            <span>本周总时长</span>
-            <strong>{weeklyReport.totalMinutes} 分钟</strong>
-          </div>
-
-          <div>
-            <span>本周打卡次数</span>
-            <strong>{weeklyReport.totalCheckins} 次</strong>
-          </div>
-
-          <div>
-            <span>本周最佳执行者</span>
-            <strong>{weeklyReport.bestMember?.memberName || "-"}</strong>
-          </div>
-        </div>
-
-        <div className="weekly-member-list">
-          {weeklyReport.memberReports.map((item) => (
-            <div className="weekly-member" key={item.memberName}>
+      {activeTab === "report" && (
+        <>
+          <section className="chart-card">
+            <div className="records-top">
               <div>
-                <strong>{item.memberName}</strong>
-                <span>{item.checkins} 天打卡</span>
+                <p className="section-kicker">LEARNING CURVE</p>
+                <h2>未来 7 天打卡视图</h2>
+
+                <p>时间轴与年度日历一致，从今天开始向后显示 7 天</p>
+              </div>
+            </div>
+
+            <div className="chart-grid">
+              {chartData.map((member) => (
+                <div className="chart-member" key={member.memberName}>
+                  <div className="chart-member-head">
+                    <strong>{member.memberName}</strong>
+                    <span>
+                      未来 7 日合计{" "}
+                      {member.days.reduce((sum, day) => sum + day.minutes, 0)} 分钟
+                    </span>
+                  </div>
+
+                  <div className="bar-chart">
+                    {member.days.map((day) => (
+                      <div className="bar-item" key={day.date}>
+                        <div className="bar-track">
+                          <div
+                            className="bar-fill"
+                            style={{
+                              height: `${Math.max(
+                                4,
+                                (day.minutes / member.maxMinutes) * 100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="bar-minutes">{day.minutes}</span>
+                        <span className="bar-label">{day.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section className="weekly-report-card">
+            <div className="records-top">
+              <div>
+                <p className="section-kicker">WEEKLY REPORT</p>
+                <h2>本周学习周报</h2>
+                <p>按本周一到周日统计，小组和个人数据会根据打卡记录自动更新</p>
+              </div>
+            </div>
+
+            <div className="weekly-summary">
+              <div>
+                <span>本周总时长</span>
+                <strong>{weeklyReport.totalMinutes} 分钟</strong>
               </div>
 
-              <p>{item.minutes} 分钟</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="history-card">
-        <div className="history-top">
-          <div>
-            <p className="section-kicker">CHECK-IN CALENDAR</p>
-            <h2>年度打卡日历</h2>
-            <p>从今天开始向后查看一年内的打卡记录，点击日期查看当天三个人的打卡情况</p>
-          </div>
-
-          <div className="calendar-control">
-            <div className="selected-summary">
-              <span>{selectedDate}</span>
-              <strong>
-                已打卡 {Object.keys(selectedRecordsByName).length}/3 人 · 总计{" "}
-                {selectedTotalMinutes} 分钟
-              </strong>
-            </div>
-
-            <div className="month-switch">
-              <button
-                onClick={() => setMonthOffset((prev) => Math.max(0, prev - 1))}
-                disabled={monthOffset === 0}
-              >
-                上个月
-              </button>
-
-              <strong>{calendarTitle}</strong>
-
-              <button
-                onClick={() => setMonthOffset((prev) => Math.min(11, prev + 1))}
-                disabled={monthOffset === 11}
-              >
-                下个月
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="calendar-grid">
-          {calendarDays.map((day) => {
-            const dayRecords = recordsByDate[day.date] || {};
-            const count = Object.keys(dayRecords).length;
-            const isSelected = selectedDate === day.date;
-
-            return (
-              <button
-                key={day.date}
-                className={isSelected ? "date-cell selected" : "date-cell"}
-                onClick={() => setSelectedDate(day.date)}
-              >
-                <span className="date-weekday">周{day.weekday}</span>
-                <strong>{day.day}</strong>
-                <span className="date-month">{day.month}月</span>
-
-                <div className="date-dots">
-                  {memberNames.map((memberName) => (
-                    <i
-                      key={memberName}
-                      className={dayRecords[memberName] ? "dot done" : "dot"}
-                    />
-                  ))}
-                </div>
-
-                <small>{count}/3</small>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="selected-day-panel">
-          {memberNames.map((memberName) => {
-            const record = selectedRecordsByName[memberName];
-
-            return (
-              <div
-                className={record ? "selected-member done" : "selected-member"}
-                key={memberName}
-              >
-                <div className="selected-member-head">
-                  <strong>{memberName}</strong>
-                  <span>{record ? "已打卡" : "未打卡"}</span>
-                </div>
-
-                {record ? (
-                  <>
-                    <p className="selected-minutes">{record.minutes} 分钟</p>
-                    <p className="selected-tasks">{record.tasks}</p>
-                    <p className="selected-note">{record.note}</p>
-
-                    {currentUser.role === "admin" && (
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDeleteRecord(record.id)}
-                      >
-                        删除这条记录
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <p className="selected-empty">这一天还没有提交记录</p>
-                )}
+              <div>
+                <span>本周打卡次数</span>
+                <strong>{weeklyReport.totalCheckins} 次</strong>
               </div>
-            );
-          })}
+
+              <div>
+                <span>本周最佳执行者</span>
+                <strong>{weeklyReport.bestMember?.memberName || "-"}</strong>
+              </div>
+            </div>
+
+            <div className="weekly-member-list">
+              {weeklyReport.memberReports.map((item) => (
+                <div className="weekly-member" key={item.memberName}>
+                  <div>
+                    <strong>{item.memberName}</strong>
+                    <span>{item.checkins} 天打卡</span>
+                  </div>
+
+                  <p>{item.minutes} 分钟</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {activeTab === "calendar" && (
+        <section className="history-card">
+          <div className="history-top">
+            <div>
+              <p className="section-kicker">CHECK-IN CALENDAR</p>
+              <h2>年度打卡日历</h2>
+              <p>查看前后一年内的打卡记录，点击日期查看当天三个人的打卡情况</p>
+            </div>
+
+            <div className="calendar-control">
+              <div className="selected-summary">
+                <span>{selectedDate}</span>
+                <strong>
+                  已打卡 {Object.keys(selectedRecordsByName).length}/3 人 · 总计{" "}
+                  {selectedTotalMinutes} 分钟
+                </strong>
+              </div>
+
+              <div className="month-switch">
+                <button
+                  onClick={() => setMonthOffset((prev) => Math.max(-12, prev - 1))}
+                  disabled={monthOffset === -12}
+                >
+                  上个月
+                </button>
+
+                <strong>{calendarTitle}</strong>
+
+                <button
+                  onClick={() => setMonthOffset((prev) => Math.min(12, prev + 1))}
+                  disabled={monthOffset === 12}
+                >
+                  下个月
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="calendar-grid">
+            {calendarDays.map((day) => {
+              const dayRecords = recordsByDate[day.date] || {};
+              const count = Object.keys(dayRecords).length;
+              const isSelected = selectedDate === day.date;
+
+              return (
+                <button
+                  key={day.date}
+                  className={isSelected ? "date-cell selected" : "date-cell"}
+                  onClick={() => setSelectedDate(day.date)}
+                >
+                  <span className="date-weekday">周{day.weekday}</span>
+                  <strong>{day.day}</strong>
+                  <span className="date-month">{day.month}月</span>
+
+                  <div className="date-dots">
+                    {memberNames.map((memberName) => (
+                      <i
+                        key={memberName}
+                        className={dayRecords[memberName] ? "dot done" : "dot"}
+                      />
+                    ))}
+                  </div>
+
+                  <small>{count}/3</small>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="selected-day-panel">
+            {memberNames.map((memberName) => {
+              const record = selectedRecordsByName[memberName];
+
+              return (
+                <div
+                  className={record ? "selected-member done" : "selected-member"}
+                  key={memberName}
+                >
+                  <div className="selected-member-head">
+                    <strong>{memberName}</strong>
+                    <span>{record ? "已打卡" : "未打卡"}</span>
+                  </div>
+
+                  {record ? (
+                    <>
+                      <p className="selected-minutes">{record.minutes} 分钟</p>
+                      <p className="selected-tasks">{record.tasks}</p>
+                      <p className="selected-note">{record.note}</p>
+
+                      {canEditRecord(record) && (
+                        <button
+                          className="edit-button"
+                          onClick={() => handleStartEdit(record)}
+                        >
+                          编辑这条记录
+                        </button>
+                      )}
+
+                      {currentUser.role === "admin" && (
+                        <button
+                          className="delete-button"
+                          onClick={() => handleDeleteRecord(record.id)}
+                        >
+                          删除这条记录
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <p className="selected-empty">这一天还没有提交记录</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {editingRecord && (
+        <div className="edit-modal-backdrop">
+          <div className="edit-modal">
+            <p className="section-kicker">EDIT RECORD</p>
+            <h2>编辑打卡记录</h2>
+
+            <div className="edit-record-info">
+              <strong>{editingRecord.name}</strong>
+              <span>{editingRecord.date}</span>
+            </div>
+
+            <label>
+              学习时长 / 分钟
+              <input
+                value={editMinutes}
+                onChange={(e) => setEditMinutes(e.target.value)}
+              />
+            </label>
+
+            <label>
+              任务内容
+              <input
+                value={editTasks}
+                onChange={(e) => setEditTasks(e.target.value)}
+              />
+            </label>
+
+            <label>
+              复盘内容
+              <textarea
+                value={editNote}
+                onChange={(e) => setEditNote(e.target.value)}
+              />
+            </label>
+
+            <div className="edit-modal-actions">
+              <button className="ghost-button" onClick={handleCancelEdit}>
+                取消
+              </button>
+
+              <button onClick={handleSaveEdit}>
+                保存修改
+              </button>
+            </div>
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }
