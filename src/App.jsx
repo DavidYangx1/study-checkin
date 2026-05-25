@@ -1,74 +1,63 @@
 import { useMemo, useState, useEffect } from "react";
-import { CheckCircle2, Flame, Clock, CalendarDays, Search } from "lucide-react";
+import CheckinForm from "./components/CheckinForm";
+import {
+  hoursToMinutes,
+  minutesToHours,
+  formatHours,
+  formatCompactHours,
+} from "./utils/timeHelpers";
 import { createClient } from "@supabase/supabase-js";
+import CalendarView from "./components/CalendarView";
 import "./App.css";
+import EditModal from "./components/EditModal";
+import MemberGrid from "./components/MemberGrid";
+import AdminPanel from "./components/AdminPanel";
+import {
+  getDateInputValue,
+  formatInputDate,
+  getCheckinStatus,
+  getStatusText,
+  isThisWeek,
+  isThisMonth,
+  getMonthDays,
+  getMonthTitle,
+  getRecentSevenDays,
+} from "./utils/dateHelpers";
+
+import {
+  getLatestRecordsByName,
+  getRecordsByMember,
+  calculateStreak,
+} from "./utils/statsHelpers";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const initialMembers = [
-  {
-    id: 1,
-    name: "David",
-    avatar: "D",
-    goal: "EJU 日语 / 文数 / 文综",
-    streak: 0,
-    total: 0,
-    checkedToday: false,
-    minutes: 0,
-    note: "今天还未打卡",
-    tasks: ["日语阅读", "文数错题", "文综复盘"],
-  },
-  {
-    id: 2,
-    name: "余静雯",
-    avatar: "余",
-    goal: "每日学习打卡",
-    streak: 0,
-    total: 0,
-    checkedToday: false,
-    minutes: 0,
-    note: "今天还未打卡",
-    tasks: ["今日任务", "复盘"],
-  },
-  {
-    id: 3,
-    name: "陈夏娇",
-    avatar: "陈",
-    goal: "每日学习打卡",
-    streak: 0,
-    total: 0,
-    checkedToday: false,
-    minutes: 0,
-    note: "今天还未打卡",
-    tasks: ["今日任务", "复盘"],
-  },
-];
-function getDateInputValue(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`;
-}
-
-function formatInputDate(dateValue) {
-  return new Date(`${dateValue}T00:00:00`).toLocaleDateString("zh-CN");
-}
 
 export default function App() {
 
   const [minutes, setMinutes] = useState("");
+  const [studyItems, setStudyItems] = useState([
+    { subject: "", taskType: "", result: "" },
+  ]);
   const [tasks, setTasks] = useState("");
   const [note, setNote] = useState("");
   const [checkinDate, setCheckinDate] = useState(() => getDateInputValue());
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState([]);
+  const [profiles, setProfiles] = useState([]);
+  const [newMemberName, setNewMemberName] = useState("");
+  const [newInviteCode, setNewInviteCode] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState("member");
   const [loading, setLoading] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [editMinutes, setEditMinutes] = useState("");
+  const [editStudyItems, setEditStudyItems] = useState([
+    { subject: "", taskType: "", result: "" },
+  ]);
   const [editTasks, setEditTasks] = useState("");
   const [editNote, setEditNote] = useState("");
   const [selectedDate, setSelectedDate] = useState(
@@ -86,7 +75,21 @@ export default function App() {
 
   useEffect(() => {
     fetchHistory();
+    fetchProfiles();
   }, []);
+  async function fetchProfiles() {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("读取成员失败：", error);
+      return;
+    }
+
+    setProfiles(data || []);
+  }
 
   async function fetchHistory() {
     const { data, error } = await supabase
@@ -142,174 +145,37 @@ export default function App() {
   }
 
   function canEditRecord(record) {
-    return currentUser.role === "admin" || currentUser.name === record.name;
+    return currentUser?.role === "admin" || currentUser?.name === record.name;
   }
+  const memberNames = profiles.map((profile) => profile.name);
+
+  const dynamicMembers = useMemo(() => {
+    return profiles.map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      avatar: profile.name?.slice(0, 1) || "?",
+      goal: profile.role === "admin" ? "管理员" : "每日学习打卡",
+      streak: 0,
+      total: 0,
+      checkedToday: false,
+      minutes: 0,
+      note: "今天还未打卡",
+      tasks: ["今日任务", "复盘"],
+    }));
+  }, [profiles]);
 
 
 
-  const memberNames = ["David", "余静雯", "陈夏娇"];
+
   const tabs = [
     { id: "checkin", label: "打卡" },
     { id: "members", label: "成员" },
     { id: "calendar", label: "日历" },
     { id: "report", label: "周报" },
-    ...(currentUser.role === "admin" ? [{ id: "admin", label: "管理" }] : []),
+    ...(currentUser?.role === "admin" ? [{ id: "admin", label: "管理" }] : []),
   ];
 
-  function getLatestRecordsByName(records) {
-    const latest = {};
 
-    records.forEach((record) => {
-      const key = record.name;
-      const existing = latest[key];
-
-      if (
-        !existing ||
-        new Date(record.created_at).getTime() >
-        new Date(existing.created_at).getTime()
-      ) {
-        latest[key] = record;
-      }
-    });
-
-    return latest;
-  }
-  function getRecordsByMember(records) {
-    const result = {};
-
-    memberNames.forEach((memberName) => {
-      result[memberName] = {};
-    });
-
-    records.forEach((record) => {
-      if (!record.name || !record.date) return;
-
-      if (!result[record.name]) {
-        result[record.name] = {};
-      }
-
-      const existing = result[record.name][record.date];
-
-      if (
-        !existing ||
-        new Date(record.created_at).getTime() >
-        new Date(existing.created_at).getTime()
-      ) {
-        result[record.name][record.date] = record;
-      }
-    });
-
-    return result;
-  }
-
-  function calculateStreak(dateMap) {
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-
-    let streak = 0;
-    const currentDate = new Date(todayDate);
-
-    while (true) {
-      const dateKey = currentDate.toLocaleDateString("zh-CN");
-
-      if (!dateMap[dateKey]) {
-        break;
-      }
-
-      streak += 1;
-      currentDate.setDate(currentDate.getDate() - 1);
-    }
-
-    return streak;
-  }
-
-
-  function isThisWeek(dateText) {
-    const date = new Date(dateText);
-    const todayDate = new Date();
-
-    date.setHours(0, 0, 0, 0);
-    todayDate.setHours(0, 0, 0, 0);
-
-    const dayOfWeek = todayDate.getDay() || 7;
-    const monday = new Date(todayDate);
-    monday.setDate(todayDate.getDate() - dayOfWeek + 1);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    return date >= monday && date <= sunday;
-  }
-
-  function isThisMonth(dateText) {
-    const date = new Date(dateText);
-    const todayDate = new Date();
-
-    return (
-      date.getFullYear() === todayDate.getFullYear() &&
-      date.getMonth() === todayDate.getMonth()
-    );
-  }
-
-  function getMonthDays(offset) {
-    const todayDate = new Date();
-
-    const targetMonth = new Date(
-      todayDate.getFullYear(),
-      todayDate.getMonth() + offset,
-      1
-    );
-
-    const year = targetMonth.getFullYear();
-    const month = targetMonth.getMonth();
-
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const days = [];
-
-    for (let day = 1; day <= lastDay; day++) {
-      const date = new Date(year, month, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date: date.toLocaleDateString("zh-CN"),
-        day: date.getDate(),
-        month: date.getMonth() + 1,
-        year: date.getFullYear(),
-        weekday: ["日", "一", "二", "三", "四", "五", "六"][date.getDay()],
-      });
-    }
-
-    return days;
-  }
-
-  function getMonthTitle(offset) {
-    const todayDate = new Date();
-    const targetMonth = new Date(
-      todayDate.getFullYear(),
-      todayDate.getMonth() + offset,
-      1
-    );
-
-    return `${targetMonth.getFullYear()} 年 ${targetMonth.getMonth() + 1} 月`;
-  }
-
-  function getNextSevenDays() {
-    const days = [];
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(todayDate);
-      date.setDate(todayDate.getDate() + i);
-
-      days.push({
-        date: date.toLocaleDateString("zh-CN"),
-        label: `${date.getMonth() + 1}/${date.getDate()}`,
-      });
-    }
-
-    return days;
-  }
 
   const recordsByDate = useMemo(() => {
     const groups = {};
@@ -333,9 +199,12 @@ export default function App() {
   const today = new Date().toLocaleDateString("zh-CN");
   const checkinDateText = formatInputDate(checkinDate);
   const todayRecordsByName = recordsByDate[today] || {};
+  const missingTodayMembers = memberNames.filter(
+    (memberName) => !todayRecordsByName[memberName]
+  );
   const recordsByMember = useMemo(() => {
-    return getRecordsByMember(history);
-  }, [history]);
+    return getRecordsByMember(history, memberNames);
+  }, [history, memberNames]);
 
   const memberStats = useMemo(() => {
     const stats = {};
@@ -352,7 +221,60 @@ export default function App() {
     });
 
     return stats;
-  }, [recordsByMember]);
+  }, [recordsByMember, memberNames]);
+  const memberRiskTags = useMemo(() => {
+    const result = {};
+
+    memberNames.forEach((memberName) => {
+      const dateMap = recordsByMember[memberName] || {};
+      const todayRecord = todayRecordsByName[memberName];
+
+      const weekRecords = Object.values(dateMap).filter((record) =>
+        isThisWeek(record.date)
+      );
+
+      const tags = [];
+
+      if (!todayRecord) {
+        tags.push({ text: "今日未提交", type: "danger" });
+      }
+
+      if (todayRecord?.status === "backfill") {
+        tags.push({ text: "补交记录", type: "danger" });
+      }
+
+      if (todayRecord?.status === "late") {
+        tags.push({ text: "迟交记录", type: "warning" });
+      }
+
+      if ((todayRecord?.edit_count || 0) > 0) {
+        tags.push({ text: `修改 ${todayRecord.edit_count} 次`, type: "info" });
+      }
+
+      const noteLength = (todayRecord?.note || "").trim().length;
+      const todayMinutes = Number(todayRecord?.minutes || 0);
+
+      if (todayRecord && noteLength < 12) {
+        tags.push({ text: "复盘过短", type: "warning" });
+      }
+
+      if (todayRecord && todayMinutes >= 360 && noteLength < 20) {
+        tags.push({ text: "高时长低复盘", type: "warning" });
+      }
+
+      if (weekRecords.length <= 2) {
+        tags.push({ text: "本周频率低", type: "warning" });
+      }
+
+      if (tags.length === 0) {
+        tags.push({ text: "状态正常", type: "safe" });
+      }
+
+      result[memberName] = tags.slice(0, 3);
+    });
+
+    return result;
+  }, [recordsByMember, todayRecordsByName, memberNames]);
   const checkedCount = Object.keys(todayRecordsByName).length;
   const totalMinutes = Object.values(todayRecordsByName).reduce(
     (sum, record) => sum + Number(record.minutes || 0),
@@ -390,7 +312,7 @@ export default function App() {
       monthMinutes,
       monthCheckins: monthRecords.length,
     };
-  }, [recordsByMember]);
+  }, [recordsByMember, memberNames]);
   const weeklyReport = useMemo(() => {
     const memberReports = memberNames.map((memberName) => {
       const dateMap = recordsByMember[memberName] || {};
@@ -403,10 +325,42 @@ export default function App() {
         0
       );
 
+      const backfillCount = weekRecords.filter(
+        (record) => record.status === "backfill"
+      ).length;
+
+      const lateCount = weekRecords.filter(
+        (record) => record.status === "late"
+      ).length;
+
+      const editCount = weekRecords.reduce(
+        (sum, record) => sum + Number(record.edit_count || 0),
+        0
+      );
+
+      const studyItemCount = weekRecords.reduce((sum, record) => {
+        const items = Array.isArray(record.study_items) ? record.study_items : [];
+        return sum + items.length;
+      }, 0);
+
+      const weakReviewCount = weekRecords.filter((record) => {
+        return (record.note || "").trim().length < 12;
+      }).length;
+
+      const onTimeCount = weekRecords.filter(
+        (record) => !record.status || record.status === "normal"
+      ).length;
+
       return {
         memberName,
         minutes,
         checkins: weekRecords.length,
+        backfillCount,
+        lateCount,
+        editCount,
+        studyItemCount,
+        weakReviewCount,
+        onTimeCount,
       };
     });
 
@@ -420,17 +374,50 @@ export default function App() {
       0
     );
 
+    const totalStudyItems = memberReports.reduce(
+      (sum, item) => sum + item.studyItemCount,
+      0
+    );
+
+    const totalBackfills = memberReports.reduce(
+      (sum, item) => sum + item.backfillCount,
+      0
+    );
+
+    const totalLate = memberReports.reduce(
+      (sum, item) => sum + item.lateCount,
+      0
+    );
+
+    const totalEdits = memberReports.reduce(
+      (sum, item) => sum + item.editCount,
+      0
+    );
+
+    const totalWeakReviews = memberReports.reduce(
+      (sum, item) => sum + item.weakReviewCount,
+      0
+    );
+
     const bestMember = [...memberReports].sort(
-      (a, b) => b.minutes - a.minutes || b.checkins - a.checkins
+      (a, b) =>
+        b.onTimeCount - a.onTimeCount ||
+        b.studyItemCount - a.studyItemCount ||
+        b.minutes - a.minutes
     )[0];
 
     return {
       totalMinutes,
       totalCheckins,
+      totalStudyItems,
+      totalBackfills,
+      totalLate,
+      totalEdits,
+      totalWeakReviews,
       bestMember,
       memberReports,
     };
-  }, [recordsByMember]);
+  }, [recordsByMember, memberNames]);
 
   const topStreak = Math.max(
     0,
@@ -446,13 +433,13 @@ export default function App() {
     (sum, record) => sum + Number(record.minutes || 0),
     0
   );
-  const nextSevenDays = useMemo(() => getNextSevenDays(), []);
+  const recentSevenDays = useMemo(() => getRecentSevenDays(), []);
 
   const chartData = useMemo(() => {
     return memberNames.map((memberName) => {
       const dateMap = recordsByMember[memberName] || {};
 
-      const days = nextSevenDays.map((day) => {
+      const days = recentSevenDays.map((day) => {
         const record = dateMap[day.date];
 
         return {
@@ -469,18 +456,20 @@ export default function App() {
         maxMinutes,
       };
     });
-  }, [recordsByMember, nextSevenDays]);
+  }, [recordsByMember, recentSevenDays, memberNames]);
 
   const syncedMembers = useMemo(() => {
-    return initialMembers.map((member) => {
+    return dynamicMembers.map((member) => {
       const record = todayRecordsByName[member.name];
       const stats = memberStats[member.name] || { streak: 0, total: 0 };
+      const riskTags = memberRiskTags[member.name] || [];
 
       if (!record) {
         return {
           ...member,
           streak: stats.streak,
           total: stats.total,
+          riskTags,
         };
       }
 
@@ -492,9 +481,10 @@ export default function App() {
         tasks: record.tasks ? record.tasks.split(" / ") : [],
         streak: stats.streak,
         total: stats.total,
+        riskTags,
       };
     });
-  }, [todayRecordsByName, memberStats]);
+  }, [dynamicMembers, todayRecordsByName, memberStats, memberRiskTags]);
 
   const sortedMembers = useMemo(() => {
     return syncedMembers
@@ -507,15 +497,79 @@ export default function App() {
   }, [syncedMembers, query]);
 
 
+  function updateStudyItem(index, field, value) {
+    setStudyItems((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    );
+  }
 
+  function addStudyItem() {
+    setStudyItems((prev) => [
+      ...prev,
+      { subject: "", taskType: "", result: "" },
+    ]);
+  }
+
+  function removeStudyItem(index) {
+    setStudyItems((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, itemIndex) => itemIndex !== index)
+    );
+  }
+
+  function normalizeStudyItems(items) {
+    return items
+      .map((item) => ({
+        subject: item.subject.trim(),
+        taskType: item.taskType.trim(),
+        result: item.result.trim(),
+      }))
+      .filter((item) => item.subject || item.taskType || item.result);
+  }
+  function updateEditStudyItem(index, field, value) {
+    setEditStudyItems((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item
+      )
+    );
+  }
+
+  function addEditStudyItem() {
+    setEditStudyItems((prev) => [
+      ...prev,
+      { subject: "", taskType: "", result: "" },
+    ]);
+  }
+
+  function removeEditStudyItem(index) {
+    setEditStudyItems((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, itemIndex) => itemIndex !== index)
+    );
+  }
   async function handleCheckin() {
-    const parsedMinutes = Math.max(0, Number(minutes) || 0);
+    const parsedMinutes = Math.max(0, hoursToMinutes(minutes));
     if (checkinDate > getDateInputValue()) {
       alert("不能提前提交未来日期的打卡");
       return;
     }
     if (!minutes || Number(minutes) <= 0) {
-      alert("请输入有效的学习时长");
+       alert("请输入有效的学习小时数");
+      return;
+    }
+    const cleanedStudyItems = normalizeStudyItems(studyItems);
+
+    if (cleanedStudyItems.length === 0) {
+      alert("请至少填写一个学习项目");
+      return;
+    }
+
+    const hasIncompleteStudyItem = cleanedStudyItems.some(
+      (item) => !item.subject || !item.taskType || !item.result
+    );
+
+    if (hasIncompleteStudyItem) {
+      alert("每个学习项目都要填写科目、任务类型和任务结果");
       return;
     }
 
@@ -542,9 +596,7 @@ export default function App() {
     const { data: existingRecords, error: selectError } = await supabase
 
       .from("checkins")
-
-      .select("id")
-
+      .select("id, status, edit_count")
       .eq("name", currentUser.name)
 
       .eq("date", checkinDateText)
@@ -560,30 +612,45 @@ export default function App() {
       return;
     }
 
+    const nowISOString = new Date().toISOString();
+    const existingRecord = existingRecords?.[0];
+    const checkinStatus = existingRecord?.status || getCheckinStatus(checkinDate);
+
     const newRecord = {
       name: currentUser.name,
       role: currentUser.role,
       date: checkinDateText,
       minutes: parsedMinutes,
+      study_items: cleanedStudyItems,
       tasks: taskList.join(" / "),
       note,
-      updated_at: new Date().toISOString(),
+      status: checkinStatus,
+      updated_at: nowISOString,
     };
 
     let error;
 
-    // 如果今天已经有记录，就更新；如果没有，就新增
-    if (existingRecords && existingRecords.length > 0) {
+    // 如果这个人这一天已经有记录，就更新；如果没有，就新增
+    if (existingRecord) {
       const result = await supabase
         .from("checkins")
-        .update(newRecord)
-        .eq("id", existingRecords[0].id);
+        .update({
+          ...newRecord,
+          edit_count: (existingRecord.edit_count || 0) + 1,
+        })
+        .eq("id", existingRecord.id);
 
       error = result.error;
     } else {
       const result = await supabase
         .from("checkins")
-        .insert([newRecord]);
+        .insert([
+          {
+            ...newRecord,
+            submitted_at: nowISOString,
+            edit_count: 0,
+          },
+        ]);
 
       error = result.error;
     }
@@ -601,6 +668,7 @@ export default function App() {
     await fetchHistory();
     setSelectedDate(checkinDateText);
     setMinutes("");
+    setStudyItems([{ subject: "", taskType: "", result: "" }]);
     setTasks("");
     setNote("");
   }
@@ -611,7 +679,16 @@ export default function App() {
     }
 
     setEditingRecord(record);
-    setEditMinutes(String(record.minutes || ""));
+    setEditMinutes(String(minutesToHours(record.minutes || 0)));
+    const recordStudyItems =
+
+      Array.isArray(record.study_items) && record.study_items.length > 0
+
+        ? record.study_items
+
+        : [{ subject: "", taskType: "", result: "" }];
+
+    setEditStudyItems(recordStudyItems);
     setEditTasks(record.tasks || "");
     setEditNote(record.note || "");
   }
@@ -638,9 +715,80 @@ export default function App() {
 
     await fetchHistory();
   }
+  async function handleAddMember() {
+    if (currentUser.role !== "admin") {
+      alert("只有管理员可以添加成员");
+      return;
+    }
+
+    const name = newMemberName.trim();
+    const inviteCode = newInviteCode.trim();
+
+    if (!name) {
+      alert("请输入成员姓名");
+      return;
+    }
+
+    if (!inviteCode) {
+      alert("请输入邀请码");
+      return;
+    }
+
+    const { error } = await supabase.from("profiles").insert([
+      {
+        name,
+        invite_code: inviteCode,
+        role: newMemberRole,
+      },
+    ]);
+
+    if (error) {
+      console.error("添加成员失败：", error);
+      alert("添加成员失败，请检查邀请码是否重复");
+      return;
+    }
+
+    setNewMemberName("");
+    setNewInviteCode("");
+    setNewMemberRole("member");
+
+    await fetchProfiles();
+  }
+
+  async function handleRemoveMember(profile) {
+    if (currentUser.role !== "admin") {
+      alert("只有管理员可以移除成员");
+      return;
+    }
+
+    if (profile.name === currentUser.name) {
+      alert("不能移除当前登录的自己");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `确定要移除成员「${profile.name}」吗？历史打卡记录会保留，但该成员将无法再登录。`
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", profile.id);
+
+    if (error) {
+      console.error("移除成员失败：", error);
+      alert("移除成员失败，请检查 Supabase 设置");
+      return;
+    }
+
+    await fetchProfiles();
+  }
   function handleCancelEdit() {
     setEditingRecord(null);
     setEditMinutes("");
+    setEditStudyItems([{ subject: "", taskType: "", result: "" }]);
     setEditTasks("");
     setEditNote("");
   }
@@ -648,7 +796,22 @@ export default function App() {
     if (!editingRecord) return;
 
     if (!editMinutes || Number(editMinutes) <= 0) {
-      alert("请输入有效的学习时长");
+      alert("请输入有效的学习小时数");
+      return;
+    }
+    const cleanedEditStudyItems = normalizeStudyItems(editStudyItems);
+
+    if (cleanedEditStudyItems.length === 0) {
+      alert("请至少填写一个学习项目");
+      return;
+    }
+
+    const hasIncompleteEditStudyItem = cleanedEditStudyItems.some(
+      (item) => !item.subject || !item.taskType || !item.result
+    );
+
+    if (hasIncompleteEditStudyItem) {
+      alert("每个学习项目都要填写科目、任务类型和任务结果");
       return;
     }
 
@@ -665,10 +828,12 @@ export default function App() {
     const { error } = await supabase
       .from("checkins")
       .update({
-        minutes: Math.max(0, Number(editMinutes) || 0),
+        minutes: Math.max(0, hoursToMinutes(editMinutes)),
+        study_items: cleanedEditStudyItems,
         tasks: editTasks.trim(),
         note: editNote.trim(),
         updated_at: new Date().toISOString(),
+        edit_count: (editingRecord.edit_count || 0) + 1,
       })
       .eq("id", editingRecord.id);
 
@@ -704,13 +869,13 @@ export default function App() {
       return String(a.name).localeCompare(String(b.name), "zh-CN");
     });
 
-    const headers = ["日期", "姓名", "身份", "学习时长", "任务", "复盘", "更新时间"];
+    const headers = ["日期", "姓名", "身份", "学习时长/小时", "任务", "复盘", "更新时间"];
 
     const rows = sortedRecords.map((record) => [
       record.date || "",
       record.name || "",
       record.role || "",
-      record.minutes || 0,
+      minutesToHours(record.minutes || 0),
       record.tasks || "",
       record.note || "",
       record.updated_at || record.created_at || "",
@@ -771,7 +936,7 @@ export default function App() {
         <div>
           <p className="header-label">PRIVATE STUDY LOG</p>
           <h1>Study Circle</h1>
-          <p>David / 余静雯 / 陈夏娇 的小群学习打卡系统</p>
+          <p>小组学习执行监督系统 · 当前 {memberNames.length} 位成员</p>
         </div>
         <div className="header-actions">
           <div className="user-badge">
@@ -802,11 +967,11 @@ export default function App() {
 
         <p className="hero-label">DAILY DISCIPLINE SYSTEM</p>
 
-        <h2>每日打卡，不要虚报时长哦～</h2>
+        <h2>每日打卡</h2>
 
         <p>
 
-          用统一记录代替口头承诺，每一天的学习时长、任务内容和复盘都会被保存，方便三个人互相监督、追踪进度、复盘执行质量
+          用统一记录代替口头承诺，每一天的学习时长、任务内容和复盘都会被保存，方便小组成员互相监督、追踪进度、复盘执行质量
 
         </p>
 
@@ -822,17 +987,17 @@ export default function App() {
 
         <div className="stat-card">
           <p>今日总时长</p>
-          <h3>{totalMinutes} 分钟</h3>
+          <h3>{formatHours(totalMinutes)}</h3>
         </div>
 
         <div className="stat-card">
           <p>本周总时长</p>
-          <h3>{periodStats.weekMinutes} 分钟</h3>
+         <h3>{formatHours(periodStats.weekMinutes)}</h3>
         </div>
 
         <div className="stat-card">
           <p>本月总时长</p>
-          <h3>{periodStats.monthMinutes} 分钟</h3>
+          <h3>{formatHours(periodStats.monthMinutes)}</h3>
         </div>
 
         <div className="stat-card">
@@ -843,6 +1008,25 @@ export default function App() {
         <div className="stat-card">
           <p>最高连续</p>
           <h3>{topStreak} 天</h3>
+        </div>
+      </section>
+      <section className="risk-card">
+        <div>
+          <p className="section-kicker">TODAY RISK</p>
+          <h2>今日未提交</h2>
+          <p>当前还有 {missingTodayMembers.length} 位成员未完成今日打卡。</p>
+        </div>
+
+        <div className="missing-list">
+          {missingTodayMembers.length === 0 ? (
+            <span className="safe-text">今日全员已提交</span>
+          ) : (
+            missingTodayMembers.map((name) => (
+              <span key={name} className="missing-pill">
+                {name}
+              </span>
+            ))
+          )}
         </div>
       </section>
       <nav className="tab-nav">
@@ -858,189 +1042,53 @@ export default function App() {
       </nav>
       <main className="main">
         {activeTab === "checkin" && (
-          <section className="form-card">
-            <h2>快速打卡</h2>
-            <div className="current-user-card">
-              当前登录：<strong>{currentUser.name}</strong>
-              <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
-            </div>
-
-            <label>
-              打卡日期
-              <input
-                type="date"
-                value={checkinDate}
-                max={getDateInputValue()}
-                onChange={(e) => setCheckinDate(e.target.value)}
-              />
-            </label>
-
-            <label>
-              学习时长 / 分钟
-              <input
-
-                value={minutes}
-
-                onChange={(e) => setMinutes(e.target.value)}
-
-                placeholder="例如：120"
-
-              />
-            </label>
-
-            <label>
-              任务标签，用逗号隔开
-              <input
-                value={tasks}
-                onChange={(e) => setTasks(e.target.value)}
-                placeholder="例如：英语学习, 数学错题"
-              />
-            </label>
-
-            <label>
-              今日复盘
-              <textarea
-
-                value={note}
-
-                onChange={(e) => setNote(e.target.value)}
-
-                placeholder="写一下今天完成了什么、哪里需要改进"
-
-              />
-            </label>
-
-            <button onClick={handleCheckin} disabled={loading}>
-
-              <CheckCircle2 size={18} />
-
-              {loading ? "提交中..." : "提交打卡"}
-
-            </button>
-          </section>
+          <CheckinForm
+            currentUser={currentUser}
+            checkinDate={checkinDate}
+            setCheckinDate={setCheckinDate}
+            minutes={minutes}
+            setMinutes={setMinutes}
+            studyItems={studyItems}
+            updateStudyItem={updateStudyItem}
+            addStudyItem={addStudyItem}
+            removeStudyItem={removeStudyItem}
+            tasks={tasks}
+            setTasks={setTasks}
+            note={note}
+            setNote={setNote}
+            loading={loading}
+            onSubmit={handleCheckin}
+          />
         )}
 
         {activeTab === "members" && (
-          <section className="records">
-            <div className="records-top">
-              <div>
-                <h2>成员打卡记录</h2>
-                <p>按今日学习时长和连续天数排序</p>
-              </div>
-
-              <div className="search">
-                <Search size={16} />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="搜索成员或目标"
-                />
-              </div>
-            </div>
-
-            <div className="member-grid">
-              {sortedMembers.map((member, index) => (
-                <div className="member-card" key={member.id}>
-                  <div className="member-head">
-                    <div className="avatar">{member.avatar}</div>
-                    <div>
-                      <h3>{member.name}</h3>
-                      <p>{member.goal}</p>
-                    </div>
-                    <span className="rank">#{index + 1}</span>
-                  </div>
-
-                  <div className="mini-stats">
-                    <div>
-                      <Flame size={15} />
-                      <span>{member.streak} 天</span>
-                    </div>
-                    <div>
-                      <Clock size={15} />
-                      <span>{member.minutes} 分钟</span>
-                    </div>
-                    <div>
-                      <CalendarDays size={15} />
-                      <span>{member.total} 次</span>
-                    </div>
-                  </div>
-
-                  <p className="note">{member.note}</p>
-
-                  <div className="tags">
-                    {member.tasks.map((task) => (
-                      <span key={task}>{task}</span>
-                    ))}
-                  </div>
-
-                  <div className={member.checkedToday ? "status done" : "status"}>
-                    {member.checkedToday ? "今日已打卡" : "今日未打卡"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+          <MemberGrid
+            query={query}
+            setQuery={setQuery}
+            members={sortedMembers}
+          />
         )}
       </main>
+
       {activeTab === "admin" && currentUser.role === "admin" && (
-        <section className="today-admin-card">
-          <div className="records-top">
-            <div>
-              <p className="section-kicker">TODAY CONTROL</p>
-              <h2>今日记录管理</h2>
-              <p>查看今天三个人的打卡状态</p>
-            </div>
-          </div>
-
-          <div className="today-record-list">
-            {memberNames.map((memberName) => {
-              const record = todayRecordsByName[memberName];
-
-              return (
-                <div
-                  className={record ? "today-record done" : "today-record"}
-                  key={memberName}
-                >
-                  <div className="today-record-head">
-                    <strong>{memberName}</strong>
-                    <span>{record ? "今日已打卡" : "今日未打卡"}</span>
-                  </div>
-
-                  {record ? (
-                    <>
-                      <p className="today-minutes">{record.minutes} 分钟</p>
-                      <p>{record.tasks}</p>
-                      <p>{record.note}</p>
-
-
-                      {canEditRecord(record) && (
-                        <button
-                          className="edit-button"
-                          onClick={() => handleStartEdit(record)}
-                        >
-                          编辑这条记录
-                        </button>
-                      )}
-
-
-
-                      {currentUser.role === "admin" && (
-                        <button
-                          className="delete-button"
-                          onClick={() => handleDeleteRecord(record.id)}
-                        >
-                          删除这条记录
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="selected-empty">今天还没有提交记录</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <AdminPanel
+          memberNames={memberNames}
+          todayRecordsByName={todayRecordsByName}
+          profiles={profiles}
+          currentUser={currentUser}
+          newMemberName={newMemberName}
+          setNewMemberName={setNewMemberName}
+          newInviteCode={newInviteCode}
+          setNewInviteCode={setNewInviteCode}
+          newMemberRole={newMemberRole}
+          setNewMemberRole={setNewMemberRole}
+          getStatusText={getStatusText}
+          canEditRecord={canEditRecord}
+          onStartEdit={handleStartEdit}
+          onDeleteRecord={handleDeleteRecord}
+          onAddMember={handleAddMember}
+          onRemoveMember={handleRemoveMember}
+        />
       )}
 
       {activeTab === "report" && (
@@ -1049,9 +1097,9 @@ export default function App() {
             <div className="records-top">
               <div>
                 <p className="section-kicker">LEARNING CURVE</p>
-                <h2>未来 7 天打卡视图</h2>
+                <h2>最近 7 天打卡视图</h2>
 
-                <p>时间轴与年度日历一致，从今天开始向后显示 7 天</p>
+                <p>从 6 天前到今天，查看每位成员最近一周的学习时长变化</p>
               </div>
             </div>
 
@@ -1061,8 +1109,8 @@ export default function App() {
                   <div className="chart-member-head">
                     <strong>{member.memberName}</strong>
                     <span>
-                      未来 7 日合计{" "}
-                      {member.days.reduce((sum, day) => sum + day.minutes, 0)} 分钟
+                      最近 7 日合计{" "}
+                    {formatHours(member.days.reduce((sum, day) => sum + day.minutes, 0))}
                     </span>
                   </div>
 
@@ -1080,7 +1128,7 @@ export default function App() {
                             }}
                           />
                         </div>
-                        <span className="bar-minutes">{day.minutes}</span>
+                        <span className="bar-minutes">{formatCompactHours(day.minutes)}</span>
                         <span className="bar-label">{day.label}</span>
                       </div>
                     ))}
@@ -1101,17 +1149,32 @@ export default function App() {
             <div className="weekly-summary">
               <div>
                 <span>本周总时长</span>
-                <strong>{weeklyReport.totalMinutes} 分钟</strong>
+                <strong>{formatHours(weeklyReport.totalMinutes)}</strong>
               </div>
 
               <div>
-                <span>本周打卡次数</span>
-                <strong>{weeklyReport.totalCheckins} 次</strong>
+                <span>本周学习项目</span>
+                <strong>{weeklyReport.totalStudyItems} 项</strong>
               </div>
 
               <div>
                 <span>本周最佳执行者</span>
                 <strong>{weeklyReport.bestMember?.memberName || "-"}</strong>
+              </div>
+
+              <div>
+                <span>补交次数</span>
+                <strong>{weeklyReport.totalBackfills} 次</strong>
+              </div>
+
+              <div>
+                <span>迟交次数</span>
+                <strong>{weeklyReport.totalLate} 次</strong>
+              </div>
+
+              <div>
+                <span>低质量复盘</span>
+                <strong>{weeklyReport.totalWeakReviews} 次</strong>
               </div>
             </div>
 
@@ -1123,7 +1186,16 @@ export default function App() {
                     <span>{item.checkins} 天打卡</span>
                   </div>
 
-                  <p>{item.minutes} 分钟</p>
+                  <p>{formatHours(item.minutes)}</p>
+
+                  <div className="weekly-quality">
+                    <span>学习项目：{item.studyItemCount} 项</span>
+                    <span>按时：{item.onTimeCount} 次</span>
+                    <span>补交：{item.backfillCount} 次</span>
+                    <span>迟交：{item.lateCount} 次</span>
+                    <span>修改：{item.editCount} 次</span>
+                    <span>低质量复盘：{item.weakReviewCount} 次</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1132,169 +1204,40 @@ export default function App() {
       )}
 
       {activeTab === "calendar" && (
-        <section className="history-card">
-          <div className="history-top">
-            <div>
-              <p className="section-kicker">CHECK-IN CALENDAR</p>
-              <h2>年度打卡日历</h2>
-              <p>查看前后一年内的打卡记录，点击日期查看当天三个人的打卡情况</p>
-            </div>
-
-            <div className="calendar-control">
-              <div className="selected-summary">
-                <span>{selectedDate}</span>
-                <strong>
-                  已打卡 {Object.keys(selectedRecordsByName).length}/3 人 · 总计{" "}
-                  {selectedTotalMinutes} 分钟
-                </strong>
-              </div>
-
-              <div className="month-switch">
-                <button
-                  onClick={() => setMonthOffset((prev) => Math.max(-12, prev - 1))}
-                  disabled={monthOffset === -12}
-                >
-                  上个月
-                </button>
-
-                <strong>{calendarTitle}</strong>
-
-                <button
-                  onClick={() => setMonthOffset((prev) => Math.min(12, prev + 1))}
-                  disabled={monthOffset === 12}
-                >
-                  下个月
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="calendar-grid">
-            {calendarDays.map((day) => {
-              const dayRecords = recordsByDate[day.date] || {};
-              const count = Object.keys(dayRecords).length;
-              const isSelected = selectedDate === day.date;
-
-              return (
-                <button
-                  key={day.date}
-                  className={isSelected ? "date-cell selected" : "date-cell"}
-                  onClick={() => setSelectedDate(day.date)}
-                >
-                  <span className="date-weekday">周{day.weekday}</span>
-                  <strong>{day.day}</strong>
-                  <span className="date-month">{day.month}月</span>
-
-                  <div className="date-dots">
-                    {memberNames.map((memberName) => (
-                      <i
-                        key={memberName}
-                        className={dayRecords[memberName] ? "dot done" : "dot"}
-                      />
-                    ))}
-                  </div>
-
-                  <small>{count}/3</small>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="selected-day-panel">
-            {memberNames.map((memberName) => {
-              const record = selectedRecordsByName[memberName];
-
-              return (
-                <div
-                  className={record ? "selected-member done" : "selected-member"}
-                  key={memberName}
-                >
-                  <div className="selected-member-head">
-                    <strong>{memberName}</strong>
-                    <span>{record ? "已打卡" : "未打卡"}</span>
-                  </div>
-
-                  {record ? (
-                    <>
-                      <p className="selected-minutes">{record.minutes} 分钟</p>
-                      <p className="selected-tasks">{record.tasks}</p>
-                      <p className="selected-note">{record.note}</p>
-
-                      {canEditRecord(record) && (
-                        <button
-                          className="edit-button"
-                          onClick={() => handleStartEdit(record)}
-                        >
-                          编辑这条记录
-                        </button>
-                      )}
-
-                      {currentUser.role === "admin" && (
-                        <button
-                          className="delete-button"
-                          onClick={() => handleDeleteRecord(record.id)}
-                        >
-                          删除这条记录
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="selected-empty">这一天还没有提交记录</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+        <CalendarView
+          memberNames={memberNames}
+          calendarDays={calendarDays}
+          calendarTitle={calendarTitle}
+          recordsByDate={recordsByDate}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          selectedRecordsByName={selectedRecordsByName}
+          selectedTotalMinutes={selectedTotalMinutes}
+          monthOffset={monthOffset}
+          setMonthOffset={setMonthOffset}
+          getStatusText={getStatusText}
+          canEditRecord={canEditRecord}
+          currentUser={currentUser}
+          onStartEdit={handleStartEdit}
+          onDeleteRecord={handleDeleteRecord}
+        />
       )}
 
-      {editingRecord && (
-        <div className="edit-modal-backdrop">
-          <div className="edit-modal">
-            <p className="section-kicker">EDIT RECORD</p>
-            <h2>编辑打卡记录</h2>
-
-            <div className="edit-record-info">
-              <strong>{editingRecord.name}</strong>
-              <span>{editingRecord.date}</span>
-            </div>
-
-            <label>
-              学习时长 / 分钟
-              <input
-                value={editMinutes}
-                onChange={(e) => setEditMinutes(e.target.value)}
-              />
-            </label>
-
-            <label>
-              任务内容
-              <input
-                value={editTasks}
-                onChange={(e) => setEditTasks(e.target.value)}
-              />
-            </label>
-
-            <label>
-              复盘内容
-              <textarea
-                value={editNote}
-                onChange={(e) => setEditNote(e.target.value)}
-              />
-            </label>
-
-            <div className="edit-modal-actions">
-              <button className="ghost-button" onClick={handleCancelEdit}>
-                取消
-              </button>
-
-              <button onClick={handleSaveEdit}>
-                保存修改
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EditModal
+        record={editingRecord}
+        editMinutes={editMinutes}
+        setEditMinutes={setEditMinutes}
+        editStudyItems={editStudyItems}
+        updateEditStudyItem={updateEditStudyItem}
+        addEditStudyItem={addEditStudyItem}
+        removeEditStudyItem={removeEditStudyItem}
+        editTasks={editTasks}
+        setEditTasks={setEditTasks}
+        editNote={editNote}
+        setEditNote={setEditNote}
+        onCancel={handleCancelEdit}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }
