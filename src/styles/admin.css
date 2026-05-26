@@ -1,0 +1,183 @@
+/* ===== Admin ===== */
+
+.today-admin-card,
+.member-admin-card,
+.chart-card,
+.weekly-report-card,
+.history-card {
+  margin: 24px auto 0;
+  max-width: 1180px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+  padding: 32px;
+  box-shadow: 0 22px 70px rgba(15, 23, 42, 0.07);
+}
+
+.today-record-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.today-record,
+.selected-member {
+  border-radius: 24px;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.today-record.done,
+.selected-member.done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.today-record-head,
+.selected-member-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.today-record-head strong,
+.selected-member-head strong {
+  font-size: 18px;
+  color: #111827;
+}
+
+.today-record-head span,
+.selected-member-head span {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.today-minutes,
+.selected-minutes {
+  margin: 4px 0 0;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #111827;
+}
+
+.today-record p,
+.selected-tasks,
+.selected-note {
+  color: #475569;
+  line-height: 1.65;
+  font-size: 14px;
+}
+
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-pill.normal {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill.late {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-pill.backfill {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pill.edited {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.record-time {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.edit-button,
+.delete-button {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.edit-button {
+  background: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.delete-button {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.member-admin-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 180px 140px;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  background: #f8fafc;
+}
+
+.member-admin-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 18px 20px;
+  margin-top: 12px;
+}
+
+.member-admin-row strong {
+  display: block;
+  font-size: 17px;
+  color: #111827;
+}
+
+.member-admin-row span {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.member-admin-row .delete-button {
+  width: auto;
+  min-width: 86px;
+  margin-top: 0;
+}

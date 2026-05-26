@@ -1,0 +1,141 @@
+/* ===== Calendar ===== */
+
+.history-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.history-top h2 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  color: #111827;
+}
+
+.history-top p {
+  margin-top: 8px;
+  color: #64748b;
+}
+
+.calendar-control {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.selected-summary span {
+  display: block;
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.selected-summary strong {
+  color: #111827;
+}
+
+.month-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.month-switch button {
+  background: #f1f5f9;
+  color: #111827;
+  padding: 9px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.month-switch strong {
+  min-width: 120px;
+  text-align: center;
+  color: #111827;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 10px;
+}
+
+.date-cell {
+  min-height: 112px;
+  background: #f8fafc;
+  color: #111827;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-cell.selected {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.date-weekday,
+.date-month,
+.date-cell small {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.date-cell.selected .date-weekday,
+.date-cell.selected .date-month,
+.date-cell.selected small {
+  color: #cbd5e1;
+}
+
+.date-cell strong {
+  margin-top: 4px;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.date-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.dot.done {
+  background: #0f172a;
+}
+
+.date-cell.selected .dot.done {
+  background: #ffffff;
+}
+
+.selected-day-panel {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.selected-empty {
+  margin: auto 0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 16px;
+  font-weight: 700;
+}

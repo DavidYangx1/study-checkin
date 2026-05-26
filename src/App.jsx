@@ -1,3 +1,5 @@
+import DashboardOverview from "./components/DashboardOverview";
+import ReportView from "./components/ReportView";
 import { useMemo, useState, useEffect } from "react";
 import CheckinForm from "./components/CheckinForm";
 import {
@@ -476,6 +478,7 @@ export default function App() {
       return {
         ...member,
         checkedToday: true,
+        record,
         minutes: Number(record.minutes || 0),
         note: record.note || "",
         tasks: record.tasks ? record.tasks.split(" / ") : [],
@@ -554,7 +557,7 @@ export default function App() {
       return;
     }
     if (!minutes || Number(minutes) <= 0) {
-       alert("请输入有效的学习小时数");
+      alert("请输入有效的学习小时数");
       return;
     }
     const cleanedStudyItems = normalizeStudyItems(studyItems);
@@ -932,103 +935,24 @@ export default function App() {
   }
   return (
     <div className="page">
-      <header className="header">
-        <div>
-          <p className="header-label">PRIVATE STUDY LOG</p>
-          <h1>Study Circle</h1>
-          <p>小组学习执行监督系统 · 当前 {memberNames.length} 位成员</p>
-        </div>
-        <div className="header-actions">
-          <div className="user-badge">
-            <strong>{currentUser.name}</strong>
-            <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
-          </div>
 
-          <button onClick={() => setActiveTab("checkin")}>
-            去打卡
-          </button>
+      <DashboardOverview
+        currentUser={currentUser}
+        memberNames={memberNames}
+        checkedCount={checkedCount}
+        totalMinutes={totalMinutes}
+        periodStats={periodStats}
+        topStreak={topStreak}
+        missingTodayMembers={missingTodayMembers}
+        formatHours={formatHours}
+        setActiveTab={setActiveTab}
+        onExportCSV={handleExportCSV}
+        onLogout={handleLogout}
+      />
 
-          {currentUser.role === "admin" && (
 
-            <button className="ghost-button" onClick={handleExportCSV}>
 
-              导出 CSV
 
-            </button>
-
-          )}
-          <button className="ghost-button" onClick={handleLogout}>
-            退出
-          </button>
-        </div>
-      </header>
-
-      <section className="hero">
-
-        <p className="hero-label">DAILY DISCIPLINE SYSTEM</p>
-
-        <h2>每日打卡</h2>
-
-        <p>
-
-          用统一记录代替口头承诺，每一天的学习时长、任务内容和复盘都会被保存，方便小组成员互相监督、追踪进度、复盘执行质量
-
-        </p>
-
-      </section>
-
-      <section className="stats">
-        <div className="stat-card">
-          <p>今日已打卡</p>
-          <h3>
-            {checkedCount}/{memberNames.length}
-          </h3>
-        </div>
-
-        <div className="stat-card">
-          <p>今日总时长</p>
-          <h3>{formatHours(totalMinutes)}</h3>
-        </div>
-
-        <div className="stat-card">
-          <p>本周总时长</p>
-         <h3>{formatHours(periodStats.weekMinutes)}</h3>
-        </div>
-
-        <div className="stat-card">
-          <p>本月总时长</p>
-          <h3>{formatHours(periodStats.monthMinutes)}</h3>
-        </div>
-
-        <div className="stat-card">
-          <p>本月打卡次数</p>
-          <h3>{periodStats.monthCheckins} 次</h3>
-        </div>
-
-        <div className="stat-card">
-          <p>最高连续</p>
-          <h3>{topStreak} 天</h3>
-        </div>
-      </section>
-      <section className="risk-card">
-        <div>
-          <p className="section-kicker">TODAY RISK</p>
-          <h2>今日未提交</h2>
-          <p>当前还有 {missingTodayMembers.length} 位成员未完成今日打卡。</p>
-        </div>
-
-        <div className="missing-list">
-          {missingTodayMembers.length === 0 ? (
-            <span className="safe-text">今日全员已提交</span>
-          ) : (
-            missingTodayMembers.map((name) => (
-              <span key={name} className="missing-pill">
-                {name}
-              </span>
-            ))
-          )}
-        </div>
-      </section>
       <nav className="tab-nav">
         {tabs.map((tab) => (
           <button
@@ -1092,115 +1016,12 @@ export default function App() {
       )}
 
       {activeTab === "report" && (
-        <>
-          <section className="chart-card">
-            <div className="records-top">
-              <div>
-                <p className="section-kicker">LEARNING CURVE</p>
-                <h2>最近 7 天打卡视图</h2>
-
-                <p>从 6 天前到今天，查看每位成员最近一周的学习时长变化</p>
-              </div>
-            </div>
-
-            <div className="chart-grid">
-              {chartData.map((member) => (
-                <div className="chart-member" key={member.memberName}>
-                  <div className="chart-member-head">
-                    <strong>{member.memberName}</strong>
-                    <span>
-                      最近 7 日合计{" "}
-                    {formatHours(member.days.reduce((sum, day) => sum + day.minutes, 0))}
-                    </span>
-                  </div>
-
-                  <div className="bar-chart">
-                    {member.days.map((day) => (
-                      <div className="bar-item" key={day.date}>
-                        <div className="bar-track">
-                          <div
-                            className="bar-fill"
-                            style={{
-                              height: `${Math.max(
-                                4,
-                                (day.minutes / member.maxMinutes) * 100
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="bar-minutes">{formatCompactHours(day.minutes)}</span>
-                        <span className="bar-label">{day.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-          <section className="weekly-report-card">
-            <div className="records-top">
-              <div>
-                <p className="section-kicker">WEEKLY REPORT</p>
-                <h2>本周学习周报</h2>
-                <p>按本周一到周日统计，小组和个人数据会根据打卡记录自动更新</p>
-              </div>
-            </div>
-
-            <div className="weekly-summary">
-              <div>
-                <span>本周总时长</span>
-                <strong>{formatHours(weeklyReport.totalMinutes)}</strong>
-              </div>
-
-              <div>
-                <span>本周学习项目</span>
-                <strong>{weeklyReport.totalStudyItems} 项</strong>
-              </div>
-
-              <div>
-                <span>本周最佳执行者</span>
-                <strong>{weeklyReport.bestMember?.memberName || "-"}</strong>
-              </div>
-
-              <div>
-                <span>补交次数</span>
-                <strong>{weeklyReport.totalBackfills} 次</strong>
-              </div>
-
-              <div>
-                <span>迟交次数</span>
-                <strong>{weeklyReport.totalLate} 次</strong>
-              </div>
-
-              <div>
-                <span>低质量复盘</span>
-                <strong>{weeklyReport.totalWeakReviews} 次</strong>
-              </div>
-            </div>
-
-            <div className="weekly-member-list">
-              {weeklyReport.memberReports.map((item) => (
-                <div className="weekly-member" key={item.memberName}>
-                  <div>
-                    <strong>{item.memberName}</strong>
-                    <span>{item.checkins} 天打卡</span>
-                  </div>
-
-                  <p>{formatHours(item.minutes)}</p>
-
-                  <div className="weekly-quality">
-                    <span>学习项目：{item.studyItemCount} 项</span>
-                    <span>按时：{item.onTimeCount} 次</span>
-                    <span>补交：{item.backfillCount} 次</span>
-                    <span>迟交：{item.lateCount} 次</span>
-                    <span>修改：{item.editCount} 次</span>
-                    <span>低质量复盘：{item.weakReviewCount} 次</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
+        <ReportView
+          chartData={chartData}
+          weeklyReport={weeklyReport}
+          formatHours={formatHours}
+          formatCompactHours={formatCompactHours}
+        />
       )}
 
       {activeTab === "calendar" && (

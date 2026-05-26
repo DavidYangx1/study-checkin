@@ -1,0 +1,165 @@
+/* ===== Review Text ===== */
+
+.review-preview {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.review-preview.compact {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.review-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.review-preview-head span {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.review-preview-head strong {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.review-preview-body {
+  display: grid;
+  gap: 6px;
+}
+
+.review-preview-body p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.review-open-button {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.review-empty {
+  margin: 12px 0 0;
+  color: #94a3b8;
+  font-size: 14px;
+  text-align: center;
+}
+
+.review-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 18px;
+  background: rgba(15, 23, 42, 0.48);
+  overflow-y: auto;
+}
+
+.review-modal {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.28);
+  padding: 28px;
+}
+
+.review-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.review-modal-head h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+
+.review-modal-head button {
+  width: auto;
+  min-width: 76px;
+}
+
+.review-modal-body {
+  display: grid;
+  gap: 12px;
+  padding-top: 18px;
+}
+
+.review-modal-body p {
+  margin: 0;
+  color: #334155;
+  font-size: 16px;
+  line-height: 1.9;
+  word-break: break-word;
+}
+
+@media (max-width: 700px) {
+  .review-preview {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .review-preview-body p {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .review-modal-backdrop {
+    padding: 16px 12px;
+  }
+
+  .review-modal {
+    max-height: calc(100vh - 32px);
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .review-modal-head {
+    flex-direction: column;
+  }
+
+  .review-modal-head button {
+    width: 100%;
+  }
+
+  .review-modal-head h2 {
+    font-size: 24px;
+  }
+
+  .review-modal-body p {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+}
