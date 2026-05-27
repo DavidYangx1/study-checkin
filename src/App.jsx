@@ -70,11 +70,19 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("checkin");
   const [notifications, setNotifications] = useState([]);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("study-circle-theme") || "charcoal-pumpkin";
+  });
 
   useEffect(() => {
     fetchHistory();
     fetchProfiles();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("study-circle-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (!currentUser?.name) {
@@ -1023,6 +1031,7 @@ export default function App() {
         memberNames={memberNames}
         checkedCount={checkedCount}
         totalMinutes={totalMinutes}
+        currentUserTodayMinutes={Number(todayRecordsByName[currentUser.name]?.minutes || 0)}
         periodStats={periodStats}
         topStreak={topStreak}
         missingTodayMembers={missingTodayMembers}
@@ -1032,6 +1041,8 @@ export default function App() {
         onLogout={handleLogout}
         unreadNotificationCount={unreadNotificationCount}
         onOpenNotifications={() => setNotificationOpen(true)}
+        theme={theme}
+        setTheme={setTheme}
       />
 
 

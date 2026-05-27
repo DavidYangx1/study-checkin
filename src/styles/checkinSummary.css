@@ -13,9 +13,9 @@
 
 .checkin-summary-card.done {
   background:
-    linear-gradient(180deg, rgba(183, 255, 60, 0.1), transparent 44%),
+    linear-gradient(180deg, var(--accent-soft), transparent 44%),
     rgba(255, 255, 255, 0.045);
-  border-color: rgba(183, 255, 60, 0.24);
+  border-color: var(--border-strong);
 }
 
 .checkin-summary-card.empty {
@@ -146,18 +146,18 @@
   margin-top: auto;
   border-radius: 999px;
   background: var(--accent);
-  color: #10150f;
+  color: var(--accent-text);
   font-size: 14px;
   font-weight: 950;
 }
 
 .member-flow-summary {
   min-height: 0;
-  max-height: 300px;
+  max-height: none;
   border-radius: 24px;
   padding: 16px;
   gap: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .member-flow-summary .checkin-summary-head {

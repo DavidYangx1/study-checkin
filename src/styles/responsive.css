@@ -762,8 +762,8 @@ body,
 
   .bottom-tab-button.active {
     background: var(--accent);
-    color: #10150f;
-    box-shadow: 0 10px 24px rgba(183, 255, 60, 0.24);
+    color: var(--accent-text);
+    box-shadow: 0 8px 18px var(--focus-ring);
   }
 }
 /* ===== Mobile form correction ===== */
@@ -1175,6 +1175,15 @@ body,
     font-size: 13px;
   }
 
+  .theme-switcher {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    min-height: 38px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+
   .stats.app-metric-strip {
     display: grid;
     grid-auto-flow: row;
@@ -1297,7 +1306,8 @@ body,
   }
 
   .member-flow-summary {
-    max-height: 218px;
+    max-height: none;
+    overflow: visible;
     padding: 12px;
     border-radius: 18px;
     gap: 9px;
@@ -1443,7 +1453,7 @@ body,
     min-height: 52px;
     margin-top: 14px !important;
     border-radius: 999px;
-    box-shadow: 0 16px 36px rgba(183, 255, 60, 0.24);
+    box-shadow: 0 12px 26px var(--focus-ring);
   }
 }
 /* ===== PC study item density fix ===== */
@@ -1558,7 +1568,8 @@ body,
   }
 
   .member-flow-summary {
-    max-height: 204px;
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -1727,4 +1738,319 @@ body,
   .calendar-grid.habit-calendar .date-cell strong {
     font-size: 16px;
   }
+}
+
+/* ===== Final charcoal pumpkin theme overrides ===== */
+
+body,
+#root {
+  background:
+    radial-gradient(circle at 18% 0%, var(--theme-glow-1), transparent 30%),
+    radial-gradient(circle at 86% 12%, var(--theme-glow-2), transparent 28%),
+    var(--bg);
+  color: var(--text-main);
+}
+
+.page,
+.login-page {
+  background: transparent;
+  color: var(--text-main);
+}
+
+.header h1,
+.hero h2,
+.records-top h2,
+.history-top h2,
+.form-card h2,
+.risk-card h2,
+.checkin-detail-head h2,
+.notification-head h2,
+.review-modal-head h2,
+.member-head h3,
+.today-record-head strong,
+.selected-member-head strong,
+.member-admin-row strong,
+.weekly-member strong,
+.chart-member-head strong {
+  color: var(--text-main);
+}
+
+.header p,
+.hero p,
+.records-top p,
+.history-top p,
+.form-card label,
+.edit-modal label,
+.checkin-subject-line,
+.checkin-review-preview p,
+.today-record p,
+.selected-tasks,
+.selected-note,
+.member-head p,
+.weekly-summary span,
+.weekly-member span,
+.bar-label,
+.comment-meta span,
+.notification-head span,
+.notification-item-head span {
+  color: var(--text-muted);
+}
+
+.form-card,
+.records,
+.today-admin-card,
+.member-admin-card,
+.chart-card,
+.weekly-report-card,
+.history-card,
+.calendar-main-card,
+.calendar-summary-card,
+.member-card,
+.checkin-summary-card,
+.login-card,
+.notification-modal,
+.review-modal,
+.edit-modal {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.today-execution-card,
+.stat-card,
+.checkin-form-section,
+.study-item,
+.current-user-card,
+.user-badge,
+.today-mini-grid div,
+.compact-risk-card,
+.member-today-hours,
+.mini-stats div,
+.member-empty-summary,
+.checkin-detail-block,
+.comment-item,
+.notification-item,
+.review-preview,
+.calendar-metrics div,
+.today-record,
+.selected-member,
+.member-admin-form,
+.member-admin-row,
+.chart-member,
+.weekly-member,
+.weekly-summary div,
+.study-item-row,
+.edit-record-info {
+  background: var(--card-soft);
+  border-color: var(--border);
+}
+
+.today-execution-card {
+  background:
+    radial-gradient(circle at 92% 10%, var(--theme-glow-1), transparent 30%),
+    linear-gradient(180deg, var(--card), var(--card-soft));
+  box-shadow: var(--shadow-soft);
+}
+
+.tab-nav,
+.bottom-tab-nav,
+.calendar-mode-tabs {
+  background: var(--nav-bg);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.tab-button,
+.bottom-tab-button,
+.calendar-mode-tabs button {
+  color: var(--text-muted);
+}
+
+.tab-button.active,
+.bottom-tab-button.active,
+.calendar-mode-tabs button.active,
+button,
+.checkin-detail-button,
+.submit-checkin-button {
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: none;
+}
+
+.header-label,
+.hero-label,
+.section-kicker {
+  color: var(--text-muted);
+}
+
+.member-count-pill,
+.user-badge span,
+.rank,
+.checkin-summary-title strong,
+.comment-section-head span,
+.review-preview-head strong,
+.status-pill.edited {
+  color: var(--text-soft);
+}
+
+.member-today-hours strong,
+.checkin-summary-hours,
+.today-minutes,
+.selected-minutes,
+.weekly-summary strong,
+.weekly-member p,
+.bar-minutes,
+.calendar-matrix-head strong,
+.today-primary-metric strong,
+.stat-card h3 {
+  color: var(--text-main);
+}
+
+.chart-member-head span,
+.weekly-quality span,
+.member-admin-row span,
+.record-time,
+.checkin-muted,
+.checkin-empty-text,
+.comment-empty,
+.notification-empty {
+  color: var(--text-muted);
+}
+
+.ghost-button,
+.month-switch button,
+.study-items-head .ghost-button,
+.review-open-button {
+  background: var(--subtle-fill);
+  color: var(--text-main);
+  border-color: var(--border);
+}
+
+input,
+textarea,
+select {
+  background: var(--card-soft);
+  color: var(--text-main);
+  -webkit-text-fill-color: var(--text-main);
+  border-color: var(--border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  -webkit-text-fill-color: var(--text-muted);
+}
+
+.today-primary-metric strong,
+.stat-card h3,
+.weekly-summary strong,
+.weekly-member p,
+.bar-minutes,
+.today-minutes,
+.selected-minutes,
+.checkin-summary-hours,
+.member-today-hours strong,
+.calendar-matrix-head strong {
+  color: var(--accent);
+}
+
+.bar-fill {
+  background: var(--accent);
+}
+
+.bar-track {
+  background: var(--dot-empty);
+}
+
+.calendar-metrics strong,
+.chart-member-head strong,
+.weekly-member strong,
+.checkin-summary-head strong,
+.checkin-summary-title span,
+.comment-meta strong,
+.notification-item-head strong {
+  color: var(--text-main);
+}
+
+.avatar,
+.habit-day.done,
+.habit-day.complete {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.habit-day.partial {
+  background: var(--dot-partial);
+  color: var(--text-main);
+}
+
+.habit-day.empty,
+.date-cell {
+  background: var(--dot-empty);
+  color: var(--dot-empty-text);
+}
+
+.date-cell.selected,
+.habit-calendar.personal .habit-day.done.selected,
+.habit-calendar.group .habit-day.complete.selected,
+.habit-day.partial.selected,
+.habit-day.empty.selected {
+  border: 0;
+  box-shadow: 0 0 0 3px var(--selected-ring);
+}
+
+.habit-day.done,
+.habit-day.complete,
+.calendar-mode-tabs button.active,
+.tab-button.active,
+.bottom-tab-button.active,
+.avatar {
+  color: var(--accent-text);
+}
+
+.risk-tag.safe,
+.risk-tag.info,
+.safe-text,
+.status-pill.normal,
+.status-pill.edited,
+.rank,
+.checkin-summary-title strong,
+.comment-section-head span {
+  background: var(--accent-soft);
+  color: var(--text-soft);
+  border-color: var(--border);
+}
+
+.risk-tag.warning,
+.status-pill.late {
+  background: var(--accent-soft);
+  color: var(--danger-text);
+}
+
+.risk-tag.danger,
+.missing-pill,
+.status-pill.backfill,
+.delete-button,
+.login-error {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: var(--border-strong);
+}
+
+.notification-item.unread,
+.member-card.done,
+.checkin-summary-card.done,
+.today-record.done,
+.selected-member.done {
+  background:
+    linear-gradient(180deg, var(--accent-soft), transparent 70%),
+    var(--card-soft);
+  border-color: var(--border-strong);
+}
+
+.checkin-detail-backdrop,
+.edit-modal-backdrop,
+.notification-backdrop,
+.review-modal-backdrop {
+  background: var(--overlay);
 }

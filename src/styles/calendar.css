@@ -15,7 +15,7 @@
 .calendar-summary-card {
   border: 1px solid var(--line);
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--card);
 }
 
 .calendar-main-card {
@@ -77,8 +77,8 @@
 .calendar-summary-card {
   padding: 20px;
   background:
-    radial-gradient(circle at 94% 8%, rgba(183, 255, 60, 0.14), transparent 34%),
-    rgba(255, 255, 255, 0.035);
+    radial-gradient(circle at 94% 8%, rgba(217, 248, 111, 0.32), transparent 34%),
+    var(--card);
 }
 
 .calendar-matrix-head {
@@ -110,7 +110,7 @@
   min-width: 0;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-soft);
   border: 1px solid var(--line);
 }
 
@@ -178,8 +178,8 @@
   display: grid;
   place-items: center;
   position: relative;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(241, 247, 242, 0.42);
+  background: rgba(23, 23, 15, 0.1);
+  color: rgba(23, 23, 15, 0.5);
   box-shadow: none;
 }
 
@@ -199,19 +199,19 @@
 }
 
 .habit-day.empty {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(241, 247, 242, 0.38);
+  background: rgba(23, 23, 15, 0.1);
+  color: rgba(23, 23, 15, 0.5);
 }
 
 .habit-day.done,
 .habit-day.complete {
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #10150f;
   border: 0;
 }
 
 .habit-day.partial {
-  background: rgba(198, 255, 61, 0.45);
+  background: rgba(198, 239, 69, 0.45);
   color: var(--text);
   border: 0;
 }
@@ -220,7 +220,7 @@
   transform: scale(1.06);
   border: 0;
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.28);
+  box-shadow: 0 0 0 3px rgba(198, 239, 69, 0.32);
 }
 
 .habit-calendar.personal .habit-day.done,
@@ -233,6 +233,7 @@
 .habit-day.partial.selected,
 .habit-day.empty.selected {
   box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.28);
+  box-shadow: 0 0 0 3px rgba(198, 239, 69, 0.32);
 }
 
 .selected-day-panel {

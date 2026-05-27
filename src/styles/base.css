@@ -1,18 +1,46 @@
 :root {
   color-scheme: dark;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --bg: #070a08;
-  --surface: #0d120f;
-  --surface-soft: #121a15;
-  --surface-card: #17211b;
-  --text: #f1f7f2;
-  --text-muted: #8d9b91;
-  --line: rgba(214, 255, 224, 0.12);
-  --accent: #b7ff3c;
-  --accent-soft: rgba(183, 255, 60, 0.13);
-  --danger: #ff5f6d;
-  --warning: #ffd166;
-  --safe: #66f2a5;
+  --bg: #142632;
+  --bg-soft: #1a3040;
+  --surface: #1a3040;
+  --surface-soft: #2a4859;
+  --surface-card: #233d4d;
+  --card: #233d4d;
+  --card-soft: #2a4859;
+  --card-strong: #315466;
+  --text: #f7f2e8;
+  --text-main: #f7f2e8;
+  --text-soft: #e6ded0;
+  --text-muted: #aebdc4;
+  --line: rgba(247, 242, 232, 0.14);
+  --border: rgba(247, 242, 232, 0.14);
+  --border-strong: rgba(247, 242, 232, 0.24);
+  --accent: #fe7f2d;
+  --accent-strong: #ff934d;
+  --accent-soft: rgba(254, 127, 45, 0.16);
+  --accent-text: #142632;
+  --pink: #fe7f2d;
+  --pink-soft: rgba(254, 127, 45, 0.14);
+  --mint: #ffb088;
+  --mint-soft: rgba(254, 127, 45, 0.1);
+  --yellow-soft: rgba(254, 127, 45, 0.14);
+  --danger: #ffb088;
+  --danger-soft: rgba(254, 127, 45, 0.14);
+  --danger-text: #ffb088;
+  --warning: #ffb66d;
+  --safe: #ff934d;
+  --shadow-soft: 0 22px 60px rgba(0, 0, 0, 0.22);
+  --theme-glow-1: rgba(254, 127, 45, 0.12);
+  --theme-glow-2: rgba(255, 147, 77, 0.08);
+  --nav-bg: rgba(35, 61, 77, 0.94);
+  --subtle-fill: rgba(247, 242, 232, 0.08);
+  --dot-empty: rgba(247, 242, 232, 0.1);
+  --dot-empty-text: rgba(247, 242, 232, 0.62);
+  --dot-partial: rgba(254, 127, 45, 0.45);
+  --selected-ring: rgba(254, 127, 45, 0.35);
+  --overlay: rgba(20, 38, 50, 0.56);
+  --focus-ring: rgba(254, 127, 45, 0.12);
   --text-h: var(--text);
   color: var(--text);
   background: var(--bg);
@@ -24,8 +52,8 @@ body,
   min-height: 100%;
   margin: 0;
   background:
-    radial-gradient(circle at 18% 0%, rgba(183, 255, 60, 0.13), transparent 30%),
-    radial-gradient(circle at 86% 12%, rgba(102, 242, 165, 0.08), transparent 28%),
+    radial-gradient(circle at 18% 0%, var(--theme-glow-1), transparent 30%),
+    radial-gradient(circle at 86% 12%, var(--theme-glow-2), transparent 28%),
     var(--bg);
   color: var(--text);
 }
@@ -51,10 +79,10 @@ button {
   cursor: pointer;
   border-radius: 999px;
   background: var(--accent);
-  color: #10150f;
+  color: var(--accent-text);
   padding: 12px 18px;
   font-weight: 900;
-  box-shadow: 0 12px 28px rgba(183, 255, 60, 0.18);
+  box-shadow: none;
 }
 
 button:disabled {
@@ -71,7 +99,7 @@ select {
   border: 1px solid var(--line);
   border-radius: 18px;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--card-soft);
   color: var(--text);
   -webkit-text-fill-color: var(--text);
   font-size: 16px;
@@ -97,8 +125,8 @@ textarea::placeholder {
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: rgba(183, 255, 60, 0.7);
-  box-shadow: 0 0 0 4px rgba(183, 255, 60, 0.12);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 4px var(--focus-ring);
 }
 
 select {
@@ -121,4 +149,118 @@ select:invalid {
 select option {
   color: var(--text);
   background: var(--surface-card);
+}
+
+/* ===== Light study app theme overrides ===== */
+
+.page,
+.login-page {
+  background: transparent;
+}
+
+.form-card,
+.records,
+.today-admin-card,
+.member-admin-card,
+.chart-card,
+.weekly-report-card,
+.history-card,
+.calendar-main-card,
+.calendar-summary-card,
+.member-card,
+.checkin-summary-card,
+.notification-modal,
+.review-modal,
+.edit-modal,
+.login-card {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text-main);
+  box-shadow: var(--shadow-soft);
+}
+
+.checkin-form-section,
+.study-item,
+.current-user-card,
+.user-badge,
+.stat-card,
+.compact-risk-card,
+.today-mini-grid div,
+.member-today-hours,
+.mini-stats div,
+.checkin-detail-block,
+.comment-item,
+.notification-item,
+.review-preview,
+.calendar-metrics div,
+.member-empty-summary,
+.today-record,
+.selected-member,
+.member-admin-form,
+.member-admin-row,
+.chart-member,
+.weekly-member,
+.weekly-summary div {
+  background: var(--card-soft);
+  border-color: var(--border);
+}
+
+.ghost-button,
+.month-switch button,
+.review-open-button,
+.study-items-head .ghost-button {
+  background: var(--subtle-fill);
+  color: var(--text-main);
+  border-color: var(--border);
+}
+
+.tab-nav,
+.bottom-tab-nav,
+.calendar-mode-tabs {
+  background: var(--nav-bg);
+  border-color: var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.tab-button,
+.bottom-tab-button,
+.calendar-mode-tabs button {
+  color: var(--text-muted);
+}
+
+.tab-button.active,
+.bottom-tab-button.active,
+.calendar-mode-tabs button.active {
+  background: var(--accent);
+  color: var(--text-main);
+  box-shadow: none;
+}
+
+.avatar,
+.checkin-detail-button,
+.submit-checkin-button {
+  color: var(--text-main);
+}
+
+.risk-tag.danger,
+.missing-pill,
+.status-pill.backfill,
+.delete-button,
+.login-error {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: rgba(159, 63, 69, 0.18);
+}
+
+.risk-tag.info,
+.risk-tag.safe,
+.safe-text,
+.status-pill.normal,
+.status-pill.edited,
+.rank,
+.checkin-summary-title strong,
+.comment-section-head span {
+  background: var(--accent-soft);
+  color: var(--text-soft);
+  border-color: var(--border);
 }

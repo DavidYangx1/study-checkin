@@ -1,4 +1,5 @@
 @import "./styles/base.css";
+@import "./styles/themes.css";
 @import "./styles/layout.css";
 @import "./styles/dashboard.css";
 @import "./styles/checkin.css";
@@ -11,6 +12,5 @@
 @import "./styles/comments.css";
 @import "./styles/notifications.css";
 @import "./styles/responsive.css";
-
 
 

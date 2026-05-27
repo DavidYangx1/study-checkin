@@ -3,6 +3,7 @@ export default function DashboardOverview({
   memberNames,
   checkedCount,
   totalMinutes,
+  currentUserTodayMinutes = 0,
   periodStats,
   topStreak,
   missingTodayMembers,
@@ -12,6 +13,8 @@ export default function DashboardOverview({
   onLogout,
   unreadNotificationCount,
   onOpenNotifications,
+  theme,
+  setTheme,
 }) {
   return (
     <>
@@ -44,6 +47,16 @@ export default function DashboardOverview({
             </button>
           )}
 
+          <select
+            className="theme-switcher"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value)}
+          >
+            <option value="charcoal-pumpkin">蓝橙</option>
+            <option value="dark-green">深绿</option>
+            <option value="classic-light">经典浅色</option>
+          </select>
+
           <button className="ghost-button header-logout-button" onClick={onLogout}>
             退出
           </button>
@@ -58,8 +71,8 @@ export default function DashboardOverview({
         </div>
 
         <div className="today-primary-metric">
-          <span>今日总时长</span>
-          <strong>{formatHours(totalMinutes)}</strong>
+          <span>我的今日时长</span>
+          <strong>{formatHours(currentUserTodayMinutes)}</strong>
         </div>
 
         <div className="today-mini-grid">
