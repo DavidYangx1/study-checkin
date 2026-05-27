@@ -21,60 +21,75 @@ export default function CheckinForm({
 }) {
   return (
     <section className="form-card">
-      <h2>快速打卡</h2>
+      <div className="checkin-form-head">
+        <div>
+          <h2>快速打卡</h2>
+          <p>记录今天的学习时长、任务项目和复盘。</p>
+        </div>
 
-      <div className="current-user-card">
-        当前登录：<strong>{currentUser.name}</strong>
-        <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
+        <div className="current-user-card">
+          当前登录：<strong>{currentUser.name}</strong>
+          <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
+        </div>
       </div>
 
-      <div className="form-row two-cols">
-        <label>
-          打卡日期
-          <input
-            type="date"
-            value={checkinDate}
-            max={getDateInputValue()}
-            onChange={(e) => setCheckinDate(e.target.value)}
-          />
-        </label>
+      <div className="checkin-workspace-grid">
+        <div className="checkin-workspace-left">
+          <div className="checkin-form-section compact-fields-card">
+            <div className="form-row two-cols">
+              <label>
+                打卡日期
+                <input
+                  type="date"
+                  value={checkinDate}
+                  max={getDateInputValue()}
+                  onChange={(e) => setCheckinDate(e.target.value)}
+                />
+              </label>
 
-        <label>
-          学习时长 / 小时
-          <input
-            value={minutes}
-            onChange={(e) => setMinutes(e.target.value)}
-            placeholder="例如：2.5"
-          />
-        </label>
-      </div>
+              <label>
+                学习时长 / 小时
+                <input
+                  value={minutes}
+                  onChange={(e) => setMinutes(e.target.value)}
+                  placeholder="例如：2.5"
+                />
+              </label>
+            </div>
+          </div>
 
-      <StudyItemsEditor
-        items={studyItems}
-        onChangeItem={updateStudyItem}
-        onAddItem={addStudyItem}
-        onRemoveItem={removeStudyItem}
-        description="一天可以记录多个科目和任务结果"
-      />
+          <div className="checkin-form-section review-section-card">
+            <div className="form-row review-row">
+              <label>
+                任务标签，用逗号隔开
+                <input
+                  value={tasks}
+                  onChange={(e) => setTasks(e.target.value)}
+                  placeholder="例如：阅读速度慢, 错题复盘, 听力精听"
+                />
+              </label>
 
-      <div className="form-row review-row">
-        <label>
-          任务标签，用逗号隔开
-          <input
-            value={tasks}
-            onChange={(e) => setTasks(e.target.value)}
-            placeholder="例如：阅读速度慢, 错题复盘, 听力精听"
-          />
-        </label>
+              <label>
+                今日复盘
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="写一下今天完成了什么、哪里需要改进"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
 
-        <label>
-          今日复盘
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="写一下今天完成了什么、哪里需要改进"
+        <div className="checkin-form-section study-section-card">
+          <StudyItemsEditor
+            items={studyItems}
+            onChangeItem={updateStudyItem}
+            onAddItem={addStudyItem}
+            onRemoveItem={removeStudyItem}
+            description="一天可以记录多个科目和任务结果"
           />
-        </label>
+        </div>
       </div>
 
       <button className="submit-checkin-button" onClick={onSubmit} disabled={loading}>

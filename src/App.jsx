@@ -8,12 +8,13 @@ import {
   formatHours,
   formatCompactHours,
 } from "./utils/timeHelpers";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./supabaseClient";
 import CalendarView from "./components/CalendarView";
 import "./App.css";
 import EditModal from "./components/EditModal";
 import MemberGrid from "./components/MemberGrid";
 import AdminPanel from "./components/AdminPanel";
+import NotificationCenter from "./components/NotificationCenter";
 import {
   getDateInputValue,
   formatInputDate,
@@ -31,13 +32,6 @@ import {
   getRecordsByMember,
   calculateStreak,
 } from "./utils/statsHelpers";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-
-
 
 export default function App() {
 
@@ -74,11 +68,41 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
   const [monthOffset, setMonthOffset] = useState(0);
   const [activeTab, setActiveTab] = useState("checkin");
+  const [notifications, setNotifications] = useState([]);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   useEffect(() => {
     fetchHistory();
     fetchProfiles();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser?.name) {
+      setNotifications([]);
+      return undefined;
+    }
+
+    fetchNotifications(currentUser.name);
+
+    const channel = supabase
+      .channel(`notifications-${currentUser.name}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `receiver_name=eq.${currentUser.name}`,
+        },
+        () => fetchNotifications(currentUser.name)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.name]);
+
   async function fetchProfiles() {
     const { data, error } = await supabase
       .from("profiles")
@@ -105,6 +129,23 @@ export default function App() {
     }
 
     setHistory(data || []);
+  }
+
+  async function fetchNotifications(receiverName = currentUser?.name) {
+    if (!receiverName) return;
+
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("receiver_name", receiverName)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("读取通知失败：", error);
+      return;
+    }
+
+    setNotifications(data || []);
   }
 
   async function handleLogin() {
@@ -144,6 +185,43 @@ export default function App() {
     localStorage.removeItem("study-circle-user");
     setCurrentUser(null);
     setInviteCode("");
+    setNotificationOpen(false);
+  }
+
+  async function handleMarkNotificationRead(notificationId) {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId);
+
+    if (error) {
+      console.error("标记通知已读失败：", error);
+      alert("标记已读失败，请检查 Supabase 设置");
+      return;
+    }
+
+    await fetchNotifications();
+  }
+
+  async function handleMarkAllNotificationsRead() {
+    const unreadIds = notifications
+      .filter((notification) => !notification.read_at)
+      .map((notification) => notification.id);
+
+    if (unreadIds.length === 0) return;
+
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds);
+
+    if (error) {
+      console.error("全部标记已读失败：", error);
+      alert("全部已读失败，请检查 Supabase 设置");
+      return;
+    }
+
+    await fetchNotifications();
   }
 
   function canEditRecord(record) {
@@ -498,6 +576,10 @@ export default function App() {
       )
       .sort((a, b) => b.minutes - a.minutes || b.streak - a.streak);
   }, [syncedMembers, query]);
+
+  const unreadNotificationCount = notifications.filter(
+    (notification) => !notification.read_at
+  ).length;
 
 
   function updateStudyItem(index, field, value) {
@@ -948,6 +1030,8 @@ export default function App() {
         setActiveTab={setActiveTab}
         onExportCSV={handleExportCSV}
         onLogout={handleLogout}
+        unreadNotificationCount={unreadNotificationCount}
+        onOpenNotifications={() => setNotificationOpen(true)}
       />
 
 
@@ -964,6 +1048,19 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      <nav className="bottom-tab-nav">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={activeTab === tab.id ? "bottom-tab-button active" : "bottom-tab-button"}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
       <main className="main">
         {activeTab === "checkin" && (
           <CheckinForm
@@ -990,6 +1087,7 @@ export default function App() {
             query={query}
             setQuery={setQuery}
             members={sortedMembers}
+            currentUser={currentUser}
           />
         )}
       </main>
@@ -1059,6 +1157,15 @@ export default function App() {
         onCancel={handleCancelEdit}
         onSave={handleSaveEdit}
       />
+
+      {notificationOpen && (
+        <NotificationCenter
+          notifications={notifications}
+          onClose={() => setNotificationOpen(false)}
+          onMarkRead={handleMarkNotificationRead}
+          onMarkAllRead={handleMarkAllNotificationsRead}
+        />
+      )}
     </div>
   );
 }

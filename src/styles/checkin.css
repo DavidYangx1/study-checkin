@@ -3,21 +3,37 @@
 .form-card,
 .records {
     width: 100%;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 28px;
+    background: var(--surface-card);
+    border: 1px solid var(--line);
+    border-radius: 30px;
     padding: 32px;
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
 }
 
 .form-card {
-    max-width: 820px;
+    max-width: 1180px;
     margin: 0 auto;
+    display: grid;
+    gap: 18px;
+}
+
+.checkin-form-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.checkin-form-head p {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .form-card h2 {
-    margin: 0 0 24px;
-    color: #111827;
+    margin: 0;
+    color: var(--text);
     font-size: 28px;
     font-weight: 900;
     text-align: left;
@@ -27,8 +43,8 @@
 .edit-modal label {
     display: grid;
     gap: 8px;
-    margin-bottom: 18px;
-    color: #475569;
+    margin-bottom: 0;
+    color: var(--text-muted);
     font-size: 14px;
     font-weight: 800;
     text-align: left;
@@ -49,24 +65,68 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 22px;
+    margin-bottom: 0;
     padding: 14px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    background: #f8fafc;
-    color: #64748b;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--text-muted);
+}
+
+.checkin-form-section {
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.035);
+    padding: 18px;
+}
+
+.checkin-workspace-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1.1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.checkin-workspace-left {
+    display: grid;
+    gap: 16px;
+}
+
+.compact-fields-card .form-row.two-cols {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.review-section-card .form-row.review-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+}
+
+.review-section-card textarea {
+    min-height: 180px;
+}
+
+.study-section-card {
+    align-self: start;
+}
+
+.compact-fields-card .form-row.two-cols,
+.review-section-card .form-row.review-row {
+    margin: 0;
 }
 
 .current-user-card strong {
-    color: #111827;
+    color: var(--text);
     font-size: 18px;
 }
 
 .current-user-card span {
     padding: 5px 10px;
     border-radius: 999px;
-    background: #eef2ff;
-    color: #4338ca;
+    background: var(--accent-soft);
+    color: var(--accent);
     font-size: 13px;
     font-weight: 800;
 }
@@ -74,11 +134,11 @@
 /* ===== Study Items ===== */
 
 .study-items-box {
-    margin: 24px 0;
-    padding: 20px;
-    border: 1px solid #e5e7eb;
-    border-radius: 24px;
-    background: #f8fafc;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .study-items-head {
@@ -86,19 +146,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .study-items-head h3 {
     margin: 0 0 6px;
-    color: #111827;
+    color: var(--text);
     font-size: 20px;
     line-height: 1.2;
 }
 
 .study-items-head p {
     margin: 0;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
@@ -107,22 +167,22 @@
     min-height: 40px;
     padding: 0 14px;
     border-radius: 999px;
-    background: #ffffff;
-    color: #0f172a;
-    border: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text);
+    border: 1px solid var(--line);
     font-size: 14px;
     box-shadow: none;
 }
 
 .study-item {
-    padding: 18px;
-    border: 1px solid #e5e7eb;
-    border-radius: 22px;
-    background: #ffffff;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.045);
 }
 
 .study-item+.study-item {
-    margin-top: 16px;
+    margin-top: 10px;
 }
 
 .study-item-top {
@@ -133,7 +193,7 @@
 }
 
 .study-item-top strong {
-    color: #111827;
+    color: var(--text);
     font-size: 18px;
 }
 
@@ -142,9 +202,9 @@
     min-height: 34px;
     padding: 0 12px;
     border-radius: 999px;
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #fecdd3;
+    background: rgba(255, 95, 109, 0.13);
+    color: var(--danger);
+    border: 1px solid rgba(255, 95, 109, 0.24);
     font-size: 13px;
 }
 
@@ -155,8 +215,8 @@
 }
 
 .study-item-row {
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
     border-radius: 16px;
     padding: 10px 12px;
     display: grid;
@@ -164,12 +224,12 @@
 }
 
 .study-item-row strong {
-    color: #111827;
+    color: var(--text);
     font-size: 14px;
 }
 
 .study-item-row span {
-    color: #475569;
+    color: var(--text-muted);
     font-size: 13px;
     line-height: 1.5;
 }
@@ -179,7 +239,7 @@
 .edit-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(0, 0, 0, 0.68);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -193,30 +253,31 @@
     max-width: 620px;
     max-height: calc(100vh - 80px);
     overflow-y: auto;
-    background: #ffffff;
-    border-radius: 28px;
+    background: var(--surface-card);
+    border: 1px solid var(--line);
+    border-radius: 30px;
     padding: 26px;
-    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
 }
 
 .edit-modal h2 {
     margin: 0 0 16px;
-    color: #111827;
+    color: var(--text);
 }
 
 .edit-record-info {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid var(--line);
     border-radius: 16px;
     padding: 12px 14px;
     margin-bottom: 18px;
 }
 
 .edit-record-info span {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .edit-modal-actions {

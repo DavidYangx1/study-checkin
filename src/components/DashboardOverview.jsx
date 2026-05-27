@@ -10,14 +10,18 @@ export default function DashboardOverview({
   setActiveTab,
   onExportCSV,
   onLogout,
+  unreadNotificationCount,
+  onOpenNotifications,
 }) {
   return (
     <>
-      <header className="header">
-        <div>
+      <header className="header app-header">
+        <div className="app-title-block">
           <p className="header-label">PRIVATE STUDY LOG</p>
-          <h1>Study Circle</h1>
-          <p>小组学习执行监督系统 · 当前 {memberNames.length} 位成员</p>
+          <div className="brand-title-row">
+            <h1>Study Circle</h1>
+            <span className="member-count-pill">当前 {memberNames.length} 位成员</span>
+          </div>
         </div>
 
         <div className="header-actions">
@@ -26,43 +30,54 @@ export default function DashboardOverview({
             <span>{currentUser.role === "admin" ? "管理员" : "成员"}</span>
           </div>
 
-          <button onClick={() => setActiveTab("checkin")}>去打卡</button>
+          <button className="header-checkin-button" onClick={() => setActiveTab("checkin")}>
+            去打卡
+          </button>
+
+          <button className="ghost-button header-message-button" onClick={onOpenNotifications}>
+            消息 {unreadNotificationCount}
+          </button>
 
           {currentUser.role === "admin" && (
-            <button className="ghost-button" onClick={onExportCSV}>
+            <button className="ghost-button header-export-button" onClick={onExportCSV}>
               导出 CSV
             </button>
           )}
 
-          <button className="ghost-button" onClick={onLogout}>
+          <button className="ghost-button header-logout-button" onClick={onLogout}>
             退出
           </button>
         </div>
       </header>
 
-      <section className="hero">
-        <p className="hero-label">DAILY DISCIPLINE SYSTEM</p>
+      <section className="hero today-execution-card">
+        <div>
+          <p className="hero-label">TODAY</p>
+          <h2>今日执行</h2>
+          <p>用打卡、复盘和评论把今天的学习状态收拢到一处。</p>
+        </div>
 
-        <h2>每日打卡</h2>
+        <div className="today-primary-metric">
+          <span>今日总时长</span>
+          <strong>{formatHours(totalMinutes)}</strong>
+        </div>
 
-        <p>
-          用统一记录代替口头承诺，每一天的学习时长、任务内容和复盘都会被保存，方便小组成员互相监督、追踪进度、复盘执行质量
-        </p>
+        <div className="today-mini-grid">
+          <div>
+            <span>已打卡</span>
+            <strong>
+              {checkedCount}/{memberNames.length}
+            </strong>
+          </div>
+
+          <div>
+            <span>未提交</span>
+            <strong>{missingTodayMembers.length}</strong>
+          </div>
+        </div>
       </section>
 
-      <section className="stats">
-        <div className="stat-card">
-          <p>今日已打卡</p>
-          <h3>
-            {checkedCount}/{memberNames.length}
-          </h3>
-        </div>
-
-        <div className="stat-card">
-          <p>今日总时长</p>
-          <h3>{formatHours(totalMinutes)}</h3>
-        </div>
-
+      <section className="stats app-metric-strip">
         <div className="stat-card">
           <p>本周总时长</p>
           <h3>{formatHours(periodStats.weekMinutes)}</h3>
@@ -84,16 +99,19 @@ export default function DashboardOverview({
         </div>
       </section>
 
-      <section className="risk-card">
+      <section className="risk-card compact-risk-card">
         <div>
           <p className="section-kicker">TODAY RISK</p>
-          <h2>今日未提交</h2>
-          <p>当前还有 {missingTodayMembers.length} 位成员未完成今日打卡。</p>
+          <h2>
+            {missingTodayMembers.length === 0
+              ? "今日全员已提交"
+              : `${missingTodayMembers.length} 人未提交`}
+          </h2>
         </div>
 
         <div className="missing-list">
           {missingTodayMembers.length === 0 ? (
-            <span className="safe-text">今日全员已提交</span>
+            <span className="safe-text">状态正常</span>
           ) : (
             missingTodayMembers.map((name) => (
               <span key={name} className="missing-pill">

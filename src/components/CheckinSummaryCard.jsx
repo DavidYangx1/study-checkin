@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import CommentSection from "./CommentSection";
 import StudyItemList from "./StudyItemList";
 import { formatHours } from "../utils/timeHelpers";
 
@@ -40,6 +41,8 @@ export default function CheckinSummaryCard({
   canDelete = false,
   onDelete,
   emptyText = "这一天还没有提交记录",
+  currentUser,
+  variant,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -70,7 +73,15 @@ export default function CheckinSummaryCard({
 
   return (
     <>
-      <div className={record ? "checkin-summary-card done" : "checkin-summary-card"}>
+      <div
+        className={[
+          "checkin-summary-card",
+          record ? "done" : "",
+          variant === "member-flow" ? "member-flow-summary" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="checkin-summary-head">
           <strong>{memberName || record.name}</strong>
           <span>{statusText || "已打卡"}</span>
@@ -227,6 +238,8 @@ export default function CheckinSummaryCard({
                 )}
               </div>
             )}
+
+            <CommentSection record={record} currentUser={currentUser} />
           </div>
         </div>
       )}

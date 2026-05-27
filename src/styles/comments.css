@@ -1,0 +1,81 @@
+/* ===== Comments ===== */
+
+.comment-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.comment-section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.comment-section-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.comment-section-head span {
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.comment-list {
+  display: grid;
+  gap: 12px;
+}
+
+.comment-item {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.comment-meta strong {
+  color: var(--text);
+}
+
+.comment-meta span,
+.comment-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.comment-item p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.comment-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.comment-form textarea {
+  min-height: 92px;
+}
+
+.comment-form button {
+  justify-self: end;
+}

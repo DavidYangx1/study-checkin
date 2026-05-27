@@ -1,6 +1,6 @@
+import { useMemo, useState } from "react";
 import CheckinSummaryCard from "./CheckinSummaryCard";
 import { formatHours } from "../utils/timeHelpers";
-import StudyItemList from "./StudyItemList";
 
 export default function CalendarView({
     memberNames,
@@ -19,22 +19,179 @@ export default function CalendarView({
     onStartEdit,
     onDeleteRecord,
 }) {
+    const [calendarMode, setCalendarMode] = useState("personal");
+
+    const currentUserName = currentUser?.name;
+    const selectedDayGroupCount = Object.keys(selectedRecordsByName).length;
+    const selectedRecords = calendarMode === "personal"
+        ? currentUserName
+            ? { [currentUserName]: selectedRecordsByName[currentUserName] }
+            : {}
+        : selectedRecordsByName;
+
+    const selectedMemberNames = calendarMode === "personal" && currentUserName
+        ? [currentUserName]
+        : memberNames;
+
+    const personalMonthStats = useMemo(() => {
+        if (!currentUserName) {
+            return { checkins: 0, minutes: 0, streak: 0 };
+        }
+
+        const checkins = calendarDays.filter((day) => {
+            return recordsByDate[day.date]?.[currentUserName];
+        });
+
+        const minutes = checkins.reduce((sum, day) => {
+            return sum + Number(recordsByDate[day.date]?.[currentUserName]?.minutes || 0);
+        }, 0);
+
+        let streak = 0;
+        const cursor = new Date();
+        cursor.setHours(0, 0, 0, 0);
+
+        while (true) {
+            const dateKey = cursor.toLocaleDateString("zh-CN");
+
+            if (!recordsByDate[dateKey]?.[currentUserName]) {
+                break;
+            }
+
+            streak += 1;
+            cursor.setDate(cursor.getDate() - 1);
+        }
+
+        return {
+            checkins: checkins.length,
+            minutes,
+            streak,
+        };
+    }, [calendarDays, currentUserName, recordsByDate]);
+
+    const groupMonthStats = useMemo(() => {
+        const completeDays = calendarDays.filter((day) => {
+            const count = Object.keys(recordsByDate[day.date] || {}).length;
+            return memberNames.length > 0 && count === memberNames.length;
+        }).length;
+
+        const activeDays = calendarDays.filter((day) => {
+            return Object.keys(recordsByDate[day.date] || {}).length > 0;
+        }).length;
+
+        return {
+            completeDays,
+            activeDays,
+        };
+    }, [calendarDays, recordsByDate, memberNames]);
+
     return (
         <section className="history-card">
-            <div className="history-top">
-                <div>
-                    <p className="section-kicker">CHECK-IN CALENDAR</p>
-                    <h2>年度打卡日历</h2>
-                    <p>查看前后一年内的打卡记录，点击日期查看当天所有成员的打卡情况</p>
+            <div className="calendar-shell">
+                <div className="calendar-main-card">
+                    <div className="history-top">
+                        <div>
+                            <p className="section-kicker">CHECK-IN CALENDAR</p>
+                            <h2>年度打卡日历</h2>
+                            <p>查看前后一年内的打卡记录，点击日期查看当天所有成员的打卡情况</p>
+
+                            <div className="calendar-mode-tabs">
+                                <button
+                                    type="button"
+                                    className={calendarMode === "personal" ? "active" : ""}
+                                    onClick={() => setCalendarMode("personal")}
+                                >
+                                    个人打卡日历
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={calendarMode === "group" ? "active" : ""}
+                                    onClick={() => setCalendarMode("group")}
+                                >
+                                    小组打卡日历
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`calendar-grid habit-calendar ${calendarMode}`}>
+                        {calendarDays.map((day) => {
+                            const dayRecords = recordsByDate[day.date] || {};
+                            const count = Object.keys(dayRecords).length;
+                            const isSelected = selectedDate === day.date;
+                            const personalDone = Boolean(currentUserName && dayRecords[currentUserName]);
+                            const completionClass = calendarMode === "personal"
+                                ? personalDone
+                                    ? "done"
+                                    : "empty"
+                                : count === 0
+                                    ? "empty"
+                                    : count === memberNames.length && memberNames.length > 0
+                                        ? "complete"
+                                        : "partial";
+
+                            return (
+                                <button
+                                    key={day.date}
+                                    className={[
+                                        "date-cell",
+                                        "habit-day",
+                                        completionClass,
+                                        isSelected ? "selected" : "",
+                                    ].filter(Boolean).join(" ")}
+                                    onClick={() => setSelectedDate(day.date)}
+                                >
+                                    <strong>{day.day}</strong>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="calendar-control">
+                <div className={`calendar-control calendar-summary-card ${calendarMode}`}>
+                    <div className="calendar-matrix-head">
+                        <div>
+                            <span>{calendarMode === "personal" ? "本月打卡" : "选中日完成"}</span>
+                            <strong>
+                                {calendarMode === "personal"
+                                    ? `${personalMonthStats.checkins} 天`
+                                    : `${selectedDayGroupCount}/${memberNames.length}`}
+                            </strong>
+                        </div>
+                    </div>
+
                     <div className="selected-summary">
-                        <span>{selectedDate}</span>
-                        <strong>
-                            已打卡 {Object.keys(selectedRecordsByName).length}/{memberNames.length} 人 · 总计{" "}
-                            {formatHours(selectedTotalMinutes)}
-                        </strong>
+                        {calendarMode === "personal" ? (
+                            <div className="calendar-metrics">
+                                <div>
+                                    <strong>{formatHours(personalMonthStats.minutes)}</strong>
+                                    <small>本月总时长</small>
+                                </div>
+                                <div>
+                                    <strong>{personalMonthStats.streak} 天</strong>
+                                    <small>当前连续天数</small>
+                                </div>
+                                <div>
+                                    <strong>{calendarTitle}</strong>
+                                    <small>当前月份</small>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="calendar-metrics">
+                                <div>
+                                    <strong>{formatHours(selectedTotalMinutes)}</strong>
+                                    <small>当天总时长</small>
+                                </div>
+                                <div>
+                                    <strong>{groupMonthStats.activeDays} 天</strong>
+                                    <small>本月有效打卡</small>
+                                </div>
+                                <div>
+                                    <strong>{calendarTitle}</strong>
+                                    <small>当前月份</small>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="month-switch">
@@ -57,40 +214,9 @@ export default function CalendarView({
                 </div>
             </div>
 
-            <div className="calendar-grid">
-                {calendarDays.map((day) => {
-                    const dayRecords = recordsByDate[day.date] || {};
-                    const count = Object.keys(dayRecords).length;
-                    const isSelected = selectedDate === day.date;
-
-                    return (
-                        <button
-                            key={day.date}
-                            className={isSelected ? "date-cell selected" : "date-cell"}
-                            onClick={() => setSelectedDate(day.date)}
-                        >
-                            <span className="date-weekday">周{day.weekday}</span>
-                            <strong>{day.day}</strong>
-                            <span className="date-month">{day.month}月</span>
-
-                            <div className="date-dots">
-                                {memberNames.map((memberName) => (
-                                    <i
-                                        key={memberName}
-                                        className={dayRecords[memberName] ? "dot done" : "dot"}
-                                    />
-                                ))}
-                            </div>
-
-                            <small>{count}/{memberNames.length}</small>
-                        </button>
-                    );
-                })}
-            </div>
-
             <div className="selected-day-panel">
-                {memberNames.map((memberName) => {
-                    const record = selectedRecordsByName[memberName];
+                {selectedMemberNames.map((memberName) => {
+                    const record = selectedRecords[memberName];
 
                     return (
                         <CheckinSummaryCard
@@ -103,6 +229,7 @@ export default function CalendarView({
                             onEdit={onStartEdit}
                             onDelete={onDeleteRecord}
                             emptyText="这一天还没有提交记录"
+                            currentUser={currentUser}
                         />
                     );
                 })}

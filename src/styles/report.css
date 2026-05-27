@@ -11,10 +11,10 @@
 .chart-member,
 .weekly-member,
 .weekly-summary div {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
   border-radius: 22px;
   padding: 18px;
-  background: #f8fafc;
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .chart-member-head {
@@ -25,8 +25,12 @@
   margin-bottom: 16px;
 }
 
+.chart-member-head strong {
+  color: var(--text);
+}
+
 .chart-member-head span {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -50,28 +54,28 @@
   flex: 1;
   display: flex;
   align-items: end;
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .bar-fill {
   width: 100%;
-  background: #0f172a;
+  background: var(--accent);
   border-radius: 999px;
 }
 
 .bar-minutes {
   margin-top: 8px;
   font-size: 12px;
-  color: #111827;
-  font-weight: 800;
+  color: var(--text);
+  font-weight: 900;
 }
 
 .bar-label {
   margin-top: 4px;
   font-size: 11px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .weekly-summary {
@@ -84,15 +88,19 @@
 .weekly-summary span,
 .weekly-member span {
   display: block;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
 .weekly-summary strong,
 .weekly-member p {
   font-size: 24px;
-  color: #111827;
-  font-weight: 900;
+  color: var(--accent);
+  font-weight: 950;
+}
+
+.weekly-member strong {
+  color: var(--text);
 }
 
 .weekly-quality {
@@ -105,10 +113,10 @@
 .weekly-quality span {
   border-radius: 999px;
   padding: 6px 10px;
-  background: #f1f5f9;
-  color: #475569;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 /* ===== Chart label compact fix ===== */
