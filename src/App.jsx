@@ -33,12 +33,12 @@ import {
   calculateStreak,
 } from "./utils/statsHelpers";
 
+const emptyStudyItem = { subject: "", taskType: "", result: "", review: "" };
+
 export default function App() {
 
   const [minutes, setMinutes] = useState("");
-  const [studyItems, setStudyItems] = useState([
-    { subject: "", taskType: "", result: "" },
-  ]);
+  const [studyItems, setStudyItems] = useState([emptyStudyItem]);
   const [tasks, setTasks] = useState("");
   const [note, setNote] = useState("");
   const [checkinDate, setCheckinDate] = useState(() => getDateInputValue());
@@ -51,9 +51,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [editMinutes, setEditMinutes] = useState("");
-  const [editStudyItems, setEditStudyItems] = useState([
-    { subject: "", taskType: "", result: "" },
-  ]);
+  const [editStudyItems, setEditStudyItems] = useState([emptyStudyItem]);
   const [editTasks, setEditTasks] = useState("");
   const [editNote, setEditNote] = useState("");
   const [selectedDate, setSelectedDate] = useState(
@@ -601,7 +599,7 @@ export default function App() {
   function addStudyItem() {
     setStudyItems((prev) => [
       ...prev,
-      { subject: "", taskType: "", result: "" },
+      emptyStudyItem,
     ]);
   }
 
@@ -614,11 +612,12 @@ export default function App() {
   function normalizeStudyItems(items) {
     return items
       .map((item) => ({
-        subject: item.subject.trim(),
-        taskType: item.taskType.trim(),
-        result: item.result.trim(),
+        subject: (item.subject || "").trim(),
+        taskType: (item.taskType || "").trim(),
+        result: (item.result || "").trim(),
+        review: (item.review || "").trim(),
       }))
-      .filter((item) => item.subject || item.taskType || item.result);
+      .filter((item) => item.subject || item.taskType || item.result || item.review);
   }
   function updateEditStudyItem(index, field, value) {
     setEditStudyItems((prev) =>
@@ -631,7 +630,7 @@ export default function App() {
   function addEditStudyItem() {
     setEditStudyItems((prev) => [
       ...prev,
-      { subject: "", taskType: "", result: "" },
+      emptyStudyItem,
     ]);
   }
 
@@ -666,20 +665,21 @@ export default function App() {
       return;
     }
 
-    if (!tasks.trim()) {
-      alert("请填写今天完成的任务标签");
-      return;
-    }
-
     if (!note.trim()) {
-      alert("请填写今日复盘");
+      alert("请填写今日总复盘");
       return;
     }
 
-    const taskList = tasks
-      .split(/[，,]/)
-      .map((t) => t.trim())
-      .filter(Boolean);
+    const autoTaskList = [
+      ...new Set(cleanedStudyItems.map((item) => item.subject).filter(Boolean)),
+    ];
+
+    const taskList = tasks.trim()
+      ? tasks
+          .split(/[，,]/)
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : autoTaskList;
 
 
 
@@ -761,7 +761,7 @@ export default function App() {
     await fetchHistory();
     setSelectedDate(checkinDateText);
     setMinutes("");
-    setStudyItems([{ subject: "", taskType: "", result: "" }]);
+    setStudyItems([emptyStudyItem]);
     setTasks("");
     setNote("");
   }
@@ -777,9 +777,9 @@ export default function App() {
 
       Array.isArray(record.study_items) && record.study_items.length > 0
 
-        ? record.study_items
+        ? normalizeStudyItems(record.study_items)
 
-        : [{ subject: "", taskType: "", result: "" }];
+        : [emptyStudyItem];
 
     setEditStudyItems(recordStudyItems);
     setEditTasks(record.tasks || "");
@@ -881,7 +881,7 @@ export default function App() {
   function handleCancelEdit() {
     setEditingRecord(null);
     setEditMinutes("");
-    setEditStudyItems([{ subject: "", taskType: "", result: "" }]);
+    setEditStudyItems([emptyStudyItem]);
     setEditTasks("");
     setEditNote("");
   }
@@ -908,22 +908,28 @@ export default function App() {
       return;
     }
 
-    if (!editTasks.trim()) {
-      alert("请填写任务内容");
+    if (!editNote.trim()) {
+      alert("请填写今日总复盘");
       return;
     }
 
-    if (!editNote.trim()) {
-      alert("请填写复盘内容");
-      return;
-    }
+    const autoEditTaskList = [
+      ...new Set(cleanedEditStudyItems.map((item) => item.subject).filter(Boolean)),
+    ];
+
+    const editTaskList = editTasks.trim()
+      ? editTasks
+          .split(/[，,]/)
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : autoEditTaskList;
 
     const { error } = await supabase
       .from("checkins")
       .update({
         minutes: Math.max(0, hoursToMinutes(editMinutes)),
         study_items: cleanedEditStudyItems,
-        tasks: editTasks.trim(),
+        tasks: editTaskList.join(" / "),
         note: editNote.trim(),
         updated_at: new Date().toISOString(),
         edit_count: (editingRecord.edit_count || 0) + 1,

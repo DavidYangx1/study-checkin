@@ -121,7 +121,7 @@ export default function CheckinSummaryCard({
 
         <div className="checkin-summary-section">
           <div className="checkin-summary-title">
-            <span>今日复盘</span>
+            <span>今日总复盘</span>
             {isLongReview && <strong>长复盘</strong>}
           </div>
 
@@ -196,7 +196,7 @@ export default function CheckinSummaryCard({
             )}
 
             <div className="checkin-detail-block">
-              <h3>今日复盘</h3>
+              <h3>今日总复盘</h3>
 
               {splitReviewText(record.note).length > 0 ? (
                 <div className="checkin-detail-review">

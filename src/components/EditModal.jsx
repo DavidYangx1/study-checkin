@@ -41,22 +41,30 @@ export default function EditModal({
           onChangeItem={updateEditStudyItem}
           onAddItem={addEditStudyItem}
           onRemoveItem={removeEditStudyItem}
-          description="可以修改这条记录里的多个学习项目"
+          description="可以修改这条记录里的多个学习项目和项目复盘"
         />
 
-        <label>
-          任务内容
-          <input
-            value={editTasks}
-            onChange={(e) => setEditTasks(e.target.value)}
-          />
-        </label>
+        <details className="advanced-options edit-advanced-options">
+          <summary className="advanced-options-toggle">
+            <span>高级选项：任务标签</span>
+            <small>不填时，系统会自动根据学习科目生成标签</small>
+          </summary>
+
+          <label>
+            任务标签，用逗号隔开
+            <input
+              value={editTasks}
+              onChange={(e) => setEditTasks(e.target.value)}
+            />
+          </label>
+        </details>
 
         <label>
-          复盘内容
+          今日总复盘
           <textarea
             value={editNote}
             onChange={(e) => setEditNote(e.target.value)}
+            placeholder="总结今天整体执行质量、主要问题、明天调整方向"
           />
         </label>
 

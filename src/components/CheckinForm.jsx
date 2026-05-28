@@ -36,6 +36,10 @@ export default function CheckinForm({
       <div className="checkin-workspace-grid">
         <div className="checkin-workspace-left">
           <div className="checkin-form-section compact-fields-card">
+            <div className="checkin-section-title">
+              <h3>基础信息</h3>
+            </div>
+
             <div className="form-row two-cols">
               <label>
                 打卡日期
@@ -58,23 +62,35 @@ export default function CheckinForm({
             </div>
           </div>
 
-          <div className="checkin-form-section review-section-card">
+          <details className="checkin-form-section advanced-options">
+            <summary className="advanced-options-toggle">
+              <span>高级选项：任务标签</span>
+              <small>不填时，系统会自动根据学习科目生成标签</small>
+            </summary>
+
+            <label>
+              任务标签，用逗号隔开
+              <input
+                value={tasks}
+                onChange={(e) => setTasks(e.target.value)}
+                placeholder="例如：阅读速度慢, 错题复盘, 听力精听"
+              />
+            </label>
+          </details>
+
+          <div className="checkin-form-section daily-review-box">
+            <div className="checkin-section-title">
+              <h3>今日总复盘</h3>
+              <p>总结今天整体执行质量、主要问题、明天调整方向</p>
+            </div>
+
             <div className="form-row review-row">
               <label>
-                任务标签，用逗号隔开
-                <input
-                  value={tasks}
-                  onChange={(e) => setTasks(e.target.value)}
-                  placeholder="例如：阅读速度慢, 错题复盘, 听力精听"
-                />
-              </label>
-
-              <label>
-                今日复盘
+                今日总复盘
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="写一下今天完成了什么、哪里需要改进"
+                  placeholder="总结今天整体执行质量、主要问题、明天调整方向"
                 />
               </label>
             </div>
@@ -87,7 +103,7 @@ export default function CheckinForm({
             onChangeItem={updateStudyItem}
             onAddItem={addStudyItem}
             onRemoveItem={removeStudyItem}
-            description="一天可以记录多个科目和任务结果"
+            description="一天可以记录多个科目，每个项目可以单独写完成结果和复盘"
           />
         </div>
       </div>

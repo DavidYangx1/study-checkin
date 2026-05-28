@@ -80,6 +80,26 @@
     padding: 18px;
 }
 
+.checkin-section-title {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+
+.checkin-section-title h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 950;
+}
+
+.checkin-section-title p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .checkin-workspace-grid {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(340px, 1.1fr);
@@ -98,14 +118,14 @@
     gap: 14px;
 }
 
-.review-section-card .form-row.review-row {
+.daily-review-box .form-row.review-row {
     display: grid;
     grid-template-columns: 1fr;
     gap: 14px;
 }
 
-.review-section-card textarea {
-    min-height: 180px;
+.daily-review-box textarea {
+    min-height: 120px;
 }
 
 .study-section-card {
@@ -113,7 +133,7 @@
 }
 
 .compact-fields-card .form-row.two-cols,
-.review-section-card .form-row.review-row {
+.daily-review-box .form-row.review-row {
     margin: 0;
 }
 
@@ -174,27 +194,93 @@
     box-shadow: none;
 }
 
+.study-item-stack {
+    display: grid;
+    gap: 10px;
+}
+
 .study-item {
-    padding: 14px;
+    padding: 12px;
     border: 1px solid var(--line);
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.045);
 }
 
-.study-item+.study-item {
-    margin-top: 10px;
+.study-item.active {
+    border-color: var(--border-strong);
+    background: var(--card-soft);
 }
 
-.study-item-top {
+.study-item-summary {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    gap: 12px;
 }
 
-.study-item-top strong {
+.study-item-summary-main {
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.study-item-summary-main strong {
     color: var(--text);
-    font-size: 18px;
+    font-size: 16px;
+}
+
+.study-item-summary-main span {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.study-item-summary-meta {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.study-item-summary-meta span {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 8px;
+    color: var(--text-muted);
+    background: var(--subtle-fill);
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.study-item-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.study-item-toggle {
+    width: auto;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.study-item-expand {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.study-item-expand textarea {
+    min-height: 96px;
 }
 
 .remove-item-button {
@@ -206,6 +292,58 @@
     color: var(--danger);
     border: 1px solid rgba(255, 95, 109, 0.24);
     font-size: 13px;
+}
+
+.advanced-options {
+    display: grid;
+    gap: 14px;
+}
+
+.advanced-options-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    color: var(--text);
+    font-weight: 950;
+    list-style: none;
+}
+
+.advanced-options-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.advanced-options-toggle::after {
+    content: "展开";
+    flex: 0 0 auto;
+    border-radius: 999px;
+    padding: 5px 9px;
+    background: var(--subtle-fill);
+    color: var(--text-muted);
+    border: 1px solid var(--line);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.advanced-options[open] .advanced-options-toggle::after {
+    content: "收起";
+}
+
+.advanced-options-toggle span,
+.advanced-options-toggle small {
+    display: block;
+}
+
+.advanced-options-toggle small {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 800;
+}
+
+.advanced-options label {
+    margin-top: 4px;
 }
 
 .study-item-list {
@@ -232,6 +370,18 @@
     color: var(--text-muted);
     font-size: 13px;
     line-height: 1.5;
+}
+
+.project-review {
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    background: var(--subtle-fill);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+    word-break: break-word;
 }
 
 /* ===== Edit Modal ===== */
