@@ -119,7 +119,9 @@ export default function StudyItemsEditor({
               {isActive && (
                 <div className="study-item-expand">
                   <label>
-                    学习科目
+                    <span className="field-label">
+                      学习科目 <span className="required-star">*</span>
+                    </span>
                     <select
                       required
                       value={item.subject || ""}
@@ -135,7 +137,9 @@ export default function StudyItemsEditor({
                   </label>
 
                   <label>
-                    任务类型
+                    <span className="field-label">
+                      任务类型 <span className="required-star">*</span>
+                    </span>
                     <select
                       required
                       value={item.taskType || ""}
@@ -151,7 +155,9 @@ export default function StudyItemsEditor({
                   </label>
 
                   <label>
-                    任务结果
+                    <span className="field-label">
+                      任务结果 <span className="required-star">*</span>
+                    </span>
                     <input
                       value={item.result || ""}
                       onChange={(e) => onChangeItem(index, "result", e.target.value)}
@@ -160,11 +166,16 @@ export default function StudyItemsEditor({
                   </label>
 
                   <label>
-                    项目复盘
+                    <span className="field-label">
+                      项目复盘 <span className="optional-hint">可选</span>
+                    </span>
+                    <span className="optional-hint">
+                      可选：记录这个项目哪里卡住、哪里进步、下次怎么调整。
+                    </span>
                     <textarea
                       value={item.review || ""}
                       onChange={(e) => onChangeItem(index, "review", e.target.value)}
-                      placeholder="这个项目哪里卡住了、哪里进步了、下次怎么调整"
+                      placeholder="可选：这个项目哪里卡住了，下一次如何改进。"
                     />
                   </label>
                 </div>

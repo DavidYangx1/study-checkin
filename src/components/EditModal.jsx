@@ -29,7 +29,9 @@ export default function EditModal({
         </div>
 
         <label>
-          学习时长 / 小时
+          <span className="field-label">
+            学习时长 / 小时 <span className="required-star">*</span>
+          </span>
           <input
             value={editMinutes}
             onChange={(e) => setEditMinutes(e.target.value)}
@@ -46,25 +48,30 @@ export default function EditModal({
 
         <details className="advanced-options edit-advanced-options">
           <summary className="advanced-options-toggle">
-            <span>高级选项：任务标签</span>
-            <small>不填时，系统会自动根据学习科目生成标签</small>
+            <span>高级选项</span>
+            <small>不填写时，系统会自动根据学习科目生成标签。</small>
           </summary>
 
           <label>
-            任务标签，用逗号隔开
+            <span className="field-label">
+              手动任务标签 <span className="optional-hint">可选</span>
+            </span>
             <input
               value={editTasks}
               onChange={(e) => setEditTasks(e.target.value)}
+              placeholder="可选，例如：阅读速度慢，错题复盘，听力精听"
             />
           </label>
         </details>
 
         <label>
-          今日总复盘
+          <span className="field-label">
+            今日总复盘 <span className="required-star">*</span>
+          </span>
           <textarea
             value={editNote}
             onChange={(e) => setEditNote(e.target.value)}
-            placeholder="总结今天整体执行质量、主要问题、明天调整方向"
+            placeholder="例如：今天数学推进顺利，但日语阅读速度慢，明天优先处理长句理解。"
           />
         </label>
 

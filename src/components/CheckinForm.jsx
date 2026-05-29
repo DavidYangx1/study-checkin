@@ -42,7 +42,9 @@ export default function CheckinForm({
 
             <div className="form-row two-cols">
               <label>
-                打卡日期
+                <span className="field-label">
+                  打卡日期 <span className="required-star">*</span>
+                </span>
                 <input
                   type="date"
                   value={checkinDate}
@@ -52,7 +54,9 @@ export default function CheckinForm({
               </label>
 
               <label>
-                学习时长 / 小时
+                <span className="field-label">
+                  学习时长 / 小时 <span className="required-star">*</span>
+                </span>
                 <input
                   value={minutes}
                   onChange={(e) => setMinutes(e.target.value)}
@@ -64,16 +68,18 @@ export default function CheckinForm({
 
           <details className="checkin-form-section advanced-options">
             <summary className="advanced-options-toggle">
-              <span>高级选项：任务标签</span>
-              <small>不填时，系统会自动根据学习科目生成标签</small>
+              <span>高级选项</span>
+              <small>不填写时，系统会自动根据学习科目生成标签。</small>
             </summary>
 
             <label>
-              任务标签，用逗号隔开
+              <span className="field-label">
+                手动任务标签 <span className="optional-hint">可选</span>
+              </span>
               <input
                 value={tasks}
                 onChange={(e) => setTasks(e.target.value)}
-                placeholder="例如：阅读速度慢, 错题复盘, 听力精听"
+                placeholder="可选，例如：阅读速度慢，错题复盘，听力精听"
               />
             </label>
           </details>
@@ -81,16 +87,18 @@ export default function CheckinForm({
           <div className="checkin-form-section daily-review-box">
             <div className="checkin-section-title">
               <h3>今日总复盘</h3>
-              <p>总结今天整体执行质量、主要问题、明天调整方向</p>
+              <p>总结今天整体执行质量、主要问题、明天调整方向。</p>
             </div>
 
             <div className="form-row review-row">
               <label>
-                今日总复盘
+                <span className="field-label">
+                  今日总复盘 <span className="required-star">*</span>
+                </span>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="总结今天整体执行质量、主要问题、明天调整方向"
+                  placeholder="例如：今天数学推进顺利，但日语阅读速度慢，明天优先处理长句理解。"
                 />
               </label>
             </div>

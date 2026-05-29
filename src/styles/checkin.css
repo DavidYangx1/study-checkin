@@ -50,6 +50,25 @@
     text-align: left;
 }
 
+.field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.required-star {
+    color: #ef4444;
+    margin-left: 4px;
+    font-weight: 900;
+}
+
+.optional-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
 .form-card>button {
     width: 100%;
     display: inline-flex;
@@ -296,7 +315,12 @@
 
 .advanced-options {
     display: grid;
-    gap: 14px;
+    gap: 12px;
+    padding: 14px 16px;
+    background: color-mix(in srgb, var(--card-soft) 42%, transparent);
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--border) 72%, transparent);
+    box-shadow: none;
 }
 
 .advanced-options-toggle {
@@ -305,8 +329,9 @@
     justify-content: space-between;
     gap: 12px;
     cursor: pointer;
-    color: var(--text);
-    font-weight: 950;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 850;
     list-style: none;
 }
 
@@ -315,10 +340,10 @@
 }
 
 .advanced-options-toggle::after {
-    content: "展开";
+    content: "展开高级选项";
     flex: 0 0 auto;
     border-radius: 999px;
-    padding: 5px 9px;
+    padding: 5px 10px;
     background: var(--subtle-fill);
     color: var(--text-muted);
     border: 1px solid var(--line);
@@ -327,7 +352,7 @@
 }
 
 .advanced-options[open] .advanced-options-toggle::after {
-    content: "收起";
+    content: "收起高级选项";
 }
 
 .advanced-options-toggle span,
@@ -339,11 +364,12 @@
     color: var(--text-muted);
     font-size: 12px;
     line-height: 1.45;
-    font-weight: 800;
+    font-weight: 600;
+    opacity: 0.86;
 }
 
 .advanced-options label {
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .study-item-list {

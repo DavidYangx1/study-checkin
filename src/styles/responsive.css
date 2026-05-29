@@ -2087,10 +2087,20 @@ textarea::placeholder {
 
   .advanced-options-toggle {
     align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .advanced-options-toggle small {
     font-size: 11px;
+  }
+
+  .advanced-options-toggle::after {
+    align-self: flex-start;
+  }
+
+  .advanced-options {
+    padding: 12px;
   }
 
   .daily-review-box textarea,
